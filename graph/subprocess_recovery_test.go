@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointsqlite "github.com/wahanbo/langgraph-go/checkpoint/sqlite"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointsqlite "github.com/ybszm/langgraph-go/checkpoint/sqlite"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 const recoveryThreadID = "sqlite-worker-kill-recovery"

@@ -6,14 +6,14 @@ import (
 	"context"
 	"sync"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 	globalotel "go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const instrumentationName = "github.com/wahanbo/langgraph-go"
+const instrumentationName = "github.com/ybszm/langgraph-go"
 
 // Callback translates graph lifecycle callbacks into OpenTelemetry spans.
 // A Callback can be reused safely by concurrent graph invocations.

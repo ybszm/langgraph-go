@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	langotel "github.com/wahanbo/langgraph-go/observability/otel"
+	"github.com/ybszm/langgraph-go/graph"
+	langotel "github.com/ybszm/langgraph-go/observability/otel"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )

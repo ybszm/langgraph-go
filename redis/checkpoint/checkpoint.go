@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	redis "github.com/redis/go-redis/v9"
-	lgcheckpoint "github.com/wahanbo/langgraph-go/checkpoint"
+	lgcheckpoint "github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type Options struct{ Prefix string }

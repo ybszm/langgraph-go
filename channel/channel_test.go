@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/channel"
+	"github.com/ybszm/langgraph-go/channel"
 )
 
 func TestLastAndAnyValue(t *testing.T) {

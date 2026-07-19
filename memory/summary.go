@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 // Summarizer condenses evicted conversation messages into plain text.

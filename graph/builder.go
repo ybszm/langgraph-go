@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/managed"
+	"github.com/ybszm/langgraph-go/managed"
 )
 
 type conditionalBranch[S any] struct {

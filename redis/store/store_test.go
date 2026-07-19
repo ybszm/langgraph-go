@@ -7,9 +7,9 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	redis "github.com/redis/go-redis/v9"
-	storeredis "github.com/wahanbo/langgraph-go/redis/store"
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/storetest"
+	storeredis "github.com/ybszm/langgraph-go/redis/store"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/storetest"
 )
 
 func TestStoreContract(t *testing.T) {

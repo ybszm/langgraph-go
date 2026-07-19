@@ -11,10 +11,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/internal/sse"
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/internal/sse"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 const maxBodyBytes = 16 << 20

@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/gemini"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/gemini"
 )
 
 func TestGeminiFunctionCall(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/backend/temporal"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type fakeChildClient struct {

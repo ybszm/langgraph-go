@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	cachememory "github.com/wahanbo/langgraph-go/cache/memory"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointmemory "github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/managed"
+	cachememory "github.com/ybszm/langgraph-go/cache/memory"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/managed"
 )
 
 type managedState struct {

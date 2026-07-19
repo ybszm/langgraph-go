@@ -8,8 +8,8 @@ import (
 	"runtime/debug"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	lgstore "github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/graph"
+	lgstore "github.com/ybszm/langgraph-go/store"
 	"golang.org/x/sync/errgroup"
 )
 

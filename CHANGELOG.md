@@ -33,5 +33,5 @@ checkpoint, functional, prebuilt-agent, remote, provider, observability, MCP,
 distributed PostgreSQL, and Temporal package boundaries described in the
 repository documentation.
 
-[Unreleased]: https://github.com/wahanbo/langgraph-go/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/wahanbo/langgraph-go/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ybszm/langgraph-go/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ybszm/langgraph-go/releases/tag/v0.1.0

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/cache"
+	"github.com/ybszm/langgraph-go/cache"
 )
 
 var schemaStatements = []string{

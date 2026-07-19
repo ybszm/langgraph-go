@@ -8,9 +8,9 @@
 
 **LangGraph에서 영감을 받은 Go용 타입 안전 영속 그래프 런타임.**
 
-[![CI](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/wahanbo/langgraph-go.svg)](https://pkg.go.dev/github.com/wahanbo/langgraph-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wahanbo/langgraph-go)](https://goreportcard.com/report/github.com/wahanbo/langgraph-go)
+[![CI](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ybszm/langgraph-go.svg)](https://pkg.go.dev/github.com/ybszm/langgraph-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ybszm/langgraph-go)](https://goreportcard.com/report/github.com/ybszm/langgraph-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
@@ -46,7 +46,7 @@ Python 패키지를 소스 수준에서 그대로 옮긴 포트도 아닙니다.
 ## 설치
 
 ```bash
-go get github.com/wahanbo/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@latest
 ```
 
 Go 1.25 이상이 필요합니다.
@@ -60,7 +60,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type State struct {

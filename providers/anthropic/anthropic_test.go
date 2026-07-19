@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/anthropic"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/anthropic"
 )
 
 func TestAnthropicToolRoundTrip(t *testing.T) {

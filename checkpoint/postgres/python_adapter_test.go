@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointpostgres "github.com/wahanbo/langgraph-go/checkpoint/postgres"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointpostgres "github.com/ybszm/langgraph-go/checkpoint/postgres"
 )
 
 func TestPythonAdapterHydratesJSONBBlobsAndWrites(t *testing.T) {

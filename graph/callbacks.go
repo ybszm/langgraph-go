@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // GraphLifecycleStatus identifies the Pregel loop state captured by a graph

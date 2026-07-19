@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // TraceRecord is a completed HTTP, graph, node, or lifecycle trace entry.

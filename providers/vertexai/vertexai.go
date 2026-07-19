@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/internal/geminiapi"
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/internal/geminiapi"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 type Config[S any] struct {

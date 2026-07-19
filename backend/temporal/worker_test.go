@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/backend/temporal"
 )
 
 type fakeRegistrar struct{ calls []string }

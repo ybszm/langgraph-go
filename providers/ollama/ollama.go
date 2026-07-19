@@ -4,7 +4,7 @@ package ollama
 import (
 	"net/http"
 
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 const DefaultBaseURL = "http://127.0.0.1:11434/v1"

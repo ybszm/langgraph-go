@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/mcpclient"
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/mcpclient"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 type addInput struct {

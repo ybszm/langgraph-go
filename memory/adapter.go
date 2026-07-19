@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 // MessageAdapter reads provider-neutral messages from an application state and

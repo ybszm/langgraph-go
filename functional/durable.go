@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 const functionalPreviousChannel = "__functional_previous__"

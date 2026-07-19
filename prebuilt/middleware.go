@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ModelHandler is one ChatModel invocation in a middleware chain.

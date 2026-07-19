@@ -4,7 +4,7 @@ package deepseek
 import (
 	"net/http"
 
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 const DefaultBaseURL = "https://api.deepseek.com"

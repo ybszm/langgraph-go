@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // Thread is a remotely managed execution namespace.

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 func TestUpdatePreservesCreatedAt(t *testing.T) {

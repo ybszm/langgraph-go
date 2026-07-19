@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
-	storesqlite "github.com/wahanbo/langgraph-go/store/sqlite"
-	"github.com/wahanbo/langgraph-go/store/storetest"
+	"github.com/ybszm/langgraph-go/store"
+	storesqlite "github.com/ybszm/langgraph-go/store/sqlite"
+	"github.com/ybszm/langgraph-go/store/storetest"
 )
 
 func TestStoreContract(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ToolCallChunk is one positional fragment of a streamed tool call.

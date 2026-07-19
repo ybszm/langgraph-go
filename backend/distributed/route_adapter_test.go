@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestCompiledRouteResolverUsesGraphRoutingAndEncodesSendInput(t *testing.T) {

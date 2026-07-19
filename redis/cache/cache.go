@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	redis "github.com/redis/go-redis/v9"
-	lgcache "github.com/wahanbo/langgraph-go/cache"
+	lgcache "github.com/ybszm/langgraph-go/cache"
 )
 
 type Options struct{ Prefix string }

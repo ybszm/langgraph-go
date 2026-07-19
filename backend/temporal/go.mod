@@ -1,9 +1,9 @@
-module github.com/wahanbo/langgraph-go/backend/temporal
+module github.com/ybszm/langgraph-go/backend/temporal
 
 go 1.25.0
 
 require (
-	github.com/wahanbo/langgraph-go v0.0.0-20260719141329-15b5bb400872
+	github.com/ybszm/langgraph-go v0.0.0-20260719141329-15b5bb400872
 	go.temporal.io/api v1.62.12
 	go.temporal.io/sdk v1.44.1
 )
@@ -35,4 +35,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/wahanbo/langgraph-go => ../..
+replace github.com/ybszm/langgraph-go => ../..

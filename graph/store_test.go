@@ -6,9 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/store"
-	storememory "github.com/wahanbo/langgraph-go/store/memory"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/store"
+	storememory "github.com/ybszm/langgraph-go/store/memory"
 )
 
 type storeState struct{ User, Memory string }

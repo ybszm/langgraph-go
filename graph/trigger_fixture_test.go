@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestDebugTriggerLabelsMatchPython129Fixture(t *testing.T) {

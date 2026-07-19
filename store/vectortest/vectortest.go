@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 // Factory constructs a fresh, empty index for one metric and dimension.

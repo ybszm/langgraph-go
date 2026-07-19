@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 // ToolOptions configures the generated retriever tool schema and result limit.

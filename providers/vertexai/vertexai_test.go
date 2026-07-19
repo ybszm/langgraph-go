@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/vertexai"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/vertexai"
 )
 
 func TestVertexAIRequestEditorSupportsRefreshingCredentials(t *testing.T) {

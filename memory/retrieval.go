@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/retrieval"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/retrieval"
 )
 
 // Retrieval injects relevant external documents into the current model context.

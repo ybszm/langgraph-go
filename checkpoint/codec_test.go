@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type codecValue struct {

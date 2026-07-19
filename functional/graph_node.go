@@ -8,8 +8,8 @@ import (
 	"runtime/debug"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // NewNode wraps a graph node with a Functional task scope.

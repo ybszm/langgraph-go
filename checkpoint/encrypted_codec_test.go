@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type failingReader struct{ err error }

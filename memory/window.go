@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 // Window projects a bounded suffix of conversation history for a model call.

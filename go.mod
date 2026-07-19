@@ -1,4 +1,4 @@
-module github.com/wahanbo/langgraph-go
+module github.com/ybszm/langgraph-go
 
 go 1.25.0
 

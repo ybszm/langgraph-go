@@ -1,9 +1,9 @@
-module github.com/wahanbo/langgraph-go/observability/otel
+module github.com/ybszm/langgraph-go/observability/otel
 
 go 1.25.0
 
 require (
-	github.com/wahanbo/langgraph-go v0.0.0-20260719141329-15b5bb400872
+	github.com/ybszm/langgraph-go v0.0.0-20260719141329-15b5bb400872
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/sdk v1.44.0
 	go.opentelemetry.io/otel/trace v1.44.0
@@ -22,4 +22,4 @@ require (
 	golang.org/x/sys v0.45.0 // indirect
 )
 
-replace github.com/wahanbo/langgraph-go => ../..
+replace github.com/ybszm/langgraph-go => ../..

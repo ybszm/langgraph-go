@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // PostgresCheckpointOutbox atomically first-writes a checkpoint pending result

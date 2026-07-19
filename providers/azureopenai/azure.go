@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 type Config[S any] struct {

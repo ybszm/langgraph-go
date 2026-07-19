@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/indexed"
-	storememory "github.com/wahanbo/langgraph-go/store/memory"
-	storesqlite "github.com/wahanbo/langgraph-go/store/sqlite"
-	vectormemory "github.com/wahanbo/langgraph-go/store/vector/memory"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/indexed"
+	storememory "github.com/ybszm/langgraph-go/store/memory"
+	storesqlite "github.com/ybszm/langgraph-go/store/sqlite"
+	vectormemory "github.com/ybszm/langgraph-go/store/vector/memory"
 	_ "modernc.org/sqlite"
 )
 

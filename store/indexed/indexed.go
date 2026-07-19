@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 var ErrIndexSync = errors.New("store committed but vector index synchronization failed")

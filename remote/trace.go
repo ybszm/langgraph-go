@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type traceContextKey struct{}

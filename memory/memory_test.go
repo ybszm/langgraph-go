@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/memory"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/retrieval"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/memory"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/retrieval"
 )
 
 type captureModel struct {

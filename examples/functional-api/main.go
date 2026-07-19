@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/functional"
+	"github.com/ybszm/langgraph-go/functional"
 )
 
 func main() {

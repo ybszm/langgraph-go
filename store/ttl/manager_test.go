@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/ttl"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/ttl"
 )
 
 type recordingStore struct {

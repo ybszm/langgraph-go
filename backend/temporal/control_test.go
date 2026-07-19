@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/backend/temporal"
 )
 
 type resumePayload struct{ Value string }

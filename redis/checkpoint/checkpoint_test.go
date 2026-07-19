@@ -5,9 +5,9 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	redis "github.com/redis/go-redis/v9"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/checkpoint/savertest"
-	checkpointredis "github.com/wahanbo/langgraph-go/redis/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint/savertest"
+	checkpointredis "github.com/ybszm/langgraph-go/redis/checkpoint"
 )
 
 func TestSaverContract(t *testing.T) {

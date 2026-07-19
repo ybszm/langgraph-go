@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/providers/internal/sse"
+	"github.com/ybszm/langgraph-go/providers/internal/sse"
 )
 
 func TestScanCommentsMultilineAndFinalEvent(t *testing.T) {

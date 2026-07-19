@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/checkpoint/savertest"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/checkpoint/savertest"
 )
 
 var fixedTime = time.Date(2026, 7, 18, 12, 0, 0, 0, time.UTC)

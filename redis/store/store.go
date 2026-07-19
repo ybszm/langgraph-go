@@ -16,7 +16,7 @@ import (
 	"time"
 
 	redis "github.com/redis/go-redis/v9"
-	lgstore "github.com/wahanbo/langgraph-go/store"
+	lgstore "github.com/ybszm/langgraph-go/store"
 )
 
 type Options struct {

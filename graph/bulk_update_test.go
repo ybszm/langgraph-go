@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func bulkGraph(t *testing.T) (*graph.CompiledGraph[customState, customDelta], *memory.Saver) {

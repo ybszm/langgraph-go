@@ -10,9 +10,9 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointpostgres "github.com/wahanbo/langgraph-go/checkpoint/postgres"
-	"github.com/wahanbo/langgraph-go/checkpoint/savertest"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointpostgres "github.com/ybszm/langgraph-go/checkpoint/postgres"
+	"github.com/ybszm/langgraph-go/checkpoint/savertest"
 )
 
 const postgresDSNEnv = "LANGGRAPH_POSTGRES_DSN"

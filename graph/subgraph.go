@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 const subgraphControlType = "langgraph.go/subgraph-control"

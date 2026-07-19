@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/providers/internal/geminiapi"
-	"github.com/wahanbo/langgraph-go/providers/openaicompat"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/providers/internal/geminiapi"
+	"github.com/ybszm/langgraph-go/providers/openaicompat"
 )
 
 const DefaultBaseURL = "https://generativelanguage.googleapis.com/v1beta"

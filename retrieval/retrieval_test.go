@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/prebuilt"
-	"github.com/wahanbo/langgraph-go/retrieval"
-	"github.com/wahanbo/langgraph-go/store"
-	vectorMemory "github.com/wahanbo/langgraph-go/store/vector/memory"
+	"github.com/ybszm/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/retrieval"
+	"github.com/ybszm/langgraph-go/store"
+	vectorMemory "github.com/ybszm/langgraph-go/store/vector/memory"
 )
 
 func TestTextSplitterPreservesUnicodeOverlapAndMetadata(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	redis "github.com/redis/go-redis/v9"
-	lgcache "github.com/wahanbo/langgraph-go/cache"
-	cacheredis "github.com/wahanbo/langgraph-go/redis/cache"
+	lgcache "github.com/ybszm/langgraph-go/cache"
+	cacheredis "github.com/ybszm/langgraph-go/redis/cache"
 )
 
 func TestStoreSetGetTTLAndClear(t *testing.T) {

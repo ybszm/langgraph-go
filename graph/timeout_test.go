@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestNodeRunAndIdleTimeouts(t *testing.T) {

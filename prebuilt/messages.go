@@ -4,7 +4,7 @@ package prebuilt
 import (
 	"encoding/json"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // Message is the minimal provider-neutral history contract used by the

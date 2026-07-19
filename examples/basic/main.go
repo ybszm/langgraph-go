@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type state struct {

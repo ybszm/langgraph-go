@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // StepInput is the complete ordered barrier payload supplied to route resolution.

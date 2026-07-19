@@ -1,10 +1,10 @@
-module github.com/wahanbo/langgraph-go/mcpclient
+module github.com/ybszm/langgraph-go/mcpclient
 
 go 1.25.0
 
 require (
 	github.com/modelcontextprotocol/go-sdk v1.6.0
-	github.com/wahanbo/langgraph-go v0.0.0-20260719141329-15b5bb400872
+	github.com/ybszm/langgraph-go v0.0.0-20260719141329-15b5bb400872
 )
 
 require (
@@ -21,4 +21,4 @@ require (
 	golang.org/x/tools v0.44.0 // indirect
 )
 
-replace github.com/wahanbo/langgraph-go => ..
+replace github.com/ybszm/langgraph-go => ..

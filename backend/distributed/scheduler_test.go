@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 func TestSchedulerEnqueuesOnlyIncompleteCheckpointTasksWithStableIDs(t *testing.T) {
