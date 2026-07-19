@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible defect
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for taking the time to report a problem.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      render: go
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Revision or version
+      placeholder: commit SHA or module version
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Go version, operating system, and relevant storage/backend.
+  - type: textarea
+    id: upstream
+    attributes:
+      label: LangGraph compatibility reference
+      description: If applicable, link or describe the Python 1.2.9 behavior.

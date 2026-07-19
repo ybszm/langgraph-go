@@ -1,0 +1,15 @@
+{
+  "upstream_version": "1.2.9",
+  "upstream_commit": "95af6a00718588e7b7ce17310e8006d267896a77",
+  "sources": [
+    "libs/langgraph/langgraph/graph/state.py",
+    "libs/langgraph/langgraph/_internal/_constants.py",
+    "libs/langgraph/tests/test_pregel.py"
+  ],
+  "labels": {
+    "static": "branch:to:source",
+    "conditional": "branch:source:choice:conditional-target",
+    "waiting": "join:left+right:join",
+    "send": "__pregel_push"
+  }
+}

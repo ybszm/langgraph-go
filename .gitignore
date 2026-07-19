@@ -1,0 +1,27 @@
+# Go build and test artifacts
+bin/
+coverage.out
+coverage
+*.test
+*.prof
+.gocache/
+dist/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local runtime data
+.langgraph/
+*.db
+*.db-shm
+*.db-wal

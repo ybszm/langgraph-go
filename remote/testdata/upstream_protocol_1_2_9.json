@@ -1,0 +1,16 @@
+{
+  "commit": "95af6a00718588e7b7ce17310e8006d267896a77",
+  "requests": [
+    {"body":{"if_exists":"raise","metadata":{"tenant":"acme"},"thread_id":"thread-1"},"method":"POST","path":"/threads","query":""},
+    {"body":null,"method":"GET","path":"/threads/thread-1","query":""},
+    {"body":{"assistant_id":"graph-1","config":{"configurable":{"mode":"fixture"}},"input":{"value":3},"stream_mode":["values","updates"],"stream_resumable":false,"stream_subgraphs":false},"method":"POST","path":"/threads/thread-1/runs","query":""},
+    {"body":null,"method":"GET","path":"/threads/thread-1/runs","query":"limit=5&offset=2"},
+    {"body":null,"method":"GET","path":"/threads/thread-1/runs/run-1","query":""},
+    {"body":null,"method":"POST","path":"/threads/thread-1/runs/run-1/cancel","query":"wait=0&action=interrupt"},
+    {"body":null,"method":"GET","path":"/threads/thread-1/runs/run-1/join","query":""},
+    {"body":null,"method":"GET","path":"/threads/thread-1/state","query":"subgraphs=true"},
+    {"body":{"as_node":"worker","values":{"value":7}},"method":"POST","path":"/threads/thread-1/state","query":""},
+    {"body":{"before":"cp-0","limit":4},"method":"POST","path":"/threads/thread-1/history","query":""}
+  ],
+  "upstream": "langgraph 1.2.9"
+}

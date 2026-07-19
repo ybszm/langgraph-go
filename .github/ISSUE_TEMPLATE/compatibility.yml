@@ -1,0 +1,38 @@
+name: Compatibility gap
+description: Report behavior that differs from the referenced Python LangGraph release.
+title: "[Compatibility]: "
+labels:
+  - compatibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve behavioral compatibility. Please include a minimal comparison when possible.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Include the langgraph-go revision and Python LangGraph version or commit.
+      placeholder: langgraph-go commit ..., langgraph 1.2.9 / commit ...
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed difference
+      description: Describe the Go result and the corresponding Python result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide small Go and Python examples, logs, or a repository link.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any relevant checkpoint, streaming, backend, or platform details.

@@ -1,0 +1,15 @@
+{
+  "upstream": {
+    "version": "1.2.9",
+    "commit": "95af6a00718588e7b7ce17310e8006d267896a77",
+    "serializer": "ormsgpack with JsonPlusSerializer private extension codes"
+  },
+  "values": {
+    "uuid": "xy0Ak6R1dWlkpFVVSUTZIDEyMzQ1Njc4MTIzNDU2NzgxMjM0NTY3ODEyMzQ1Njc4",
+    "datetime": "x0MDlKhkYXRldGltZahkYXRldGltZdkgMjAyNi0wNy0xOVQwODozMDo0NS4xMjM0NTYrMDA6MDCtZnJvbWlzb2Zvcm1hdA==",
+    "set": "xxIAk6hidWlsdGluc6NzZXSTAQID",
+    "send": "xyIBk69sYW5nZ3JhcGgudHlwZXOkU2VuZJKmd29ya2VygaF4AQ==",
+    "nested": "hKR1dWlkxy0Ak6R1dWlkpFVVSUTZIDEyMzQ1Njc4MTIzNDU2NzgxMjM0NTY3ODEyMzQ1Njc4qGRhdGV0aW1lx0MDlKhkYXRldGltZahkYXRldGltZdkgMjAyNi0wNy0xOVQwODozMDo0NS4xMjM0NTYrMDA6MDCtZnJvbWlzb2Zvcm1hdKNzZXTHEgCTqGJ1aWx0aW5zo3NldJMBAgOkc2VuZMciAZOvbGFuZ2dyYXBoLnR5cGVzpFNlbmSSpndvcmtlcoGheAE="
+  },
+  "checkpoint": "iKF2AqJpZNkkMWYwMDAwMDAtMDAwMC02MDAwLTgwMDAtMDAwMDAwMDAwMDk5onRzuTIwMjYtMDctMTlUMDg6MzA6NDUrMDA6MDCuY2hhbm5lbF92YWx1ZXOBomlkxy0Ak6R1dWlkpFVVSUTZIDEyMzQ1Njc4MTIzNDU2NzgxMjM0NTY3ODEyMzQ1Njc4sGNoYW5uZWxfdmVyc2lvbnOBomlkonYxrXZlcnNpb25zX3NlZW6BpndvcmtlcoGiaWSidjGtcGVuZGluZ19zZW5kc5HHIgGTr2xhbmdncmFwaC50eXBlc6RTZW5kkqZ3b3JrZXKBoXgBsHVwZGF0ZWRfY2hhbm5lbHORomlk"
+}
