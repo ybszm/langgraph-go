@@ -4,6 +4,8 @@
 
 # LangGraph Go
 
+[English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
+
 **A typed, durable graph runtime for Go, inspired by LangGraph.**
 
 [![CI](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml)
