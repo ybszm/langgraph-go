@@ -20,6 +20,9 @@ Thumbs.db
 *.pem
 *.key
 
+# Private learning notes (never publish)
+0-1学习.md
+
 # Local runtime data
 .langgraph/
 *.db

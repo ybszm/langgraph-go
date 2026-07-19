@@ -14,7 +14,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/backend/distributed"
 )
 
 func distributedPostgresDB(t *testing.T) *sql.DB {

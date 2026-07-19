@@ -8,9 +8,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
-	vectormemory "github.com/wahanbo/langgraph-go/store/vector/memory"
-	"github.com/wahanbo/langgraph-go/store/vectortest"
+	"github.com/ybszm/langgraph-go/store"
+	vectormemory "github.com/ybszm/langgraph-go/store/vector/memory"
+	"github.com/ybszm/langgraph-go/store/vectortest"
 )
 
 func TestVectorIndexContract(t *testing.T) {

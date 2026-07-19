@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/checkpoint/savertest"
-	checkpointsqlite "github.com/wahanbo/langgraph-go/checkpoint/sqlite"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint/savertest"
+	checkpointsqlite "github.com/ybszm/langgraph-go/checkpoint/sqlite"
 )
 
 var testTime = time.Date(2026, 7, 18, 13, 0, 0, 0, time.UTC)

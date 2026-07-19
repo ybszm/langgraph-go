@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // StateTask describes one task attached to a state snapshot. Result is set

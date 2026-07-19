@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 func TestPythonCheckpointFixture12_9RoundTrip(t *testing.T) {

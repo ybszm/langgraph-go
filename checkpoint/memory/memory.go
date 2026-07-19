@@ -9,7 +9,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type checkpointKey struct {

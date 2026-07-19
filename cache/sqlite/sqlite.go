@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/cache"
+	"github.com/ybszm/langgraph-go/cache"
 	_ "modernc.org/sqlite"
 )
 

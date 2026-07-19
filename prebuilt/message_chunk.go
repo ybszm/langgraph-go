@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ToolCallChunk is one positional fragment of a streamed tool call.
@@ -53,6 +53,15 @@ func (adapter MessageChunkAdapterFunc[C]) AdaptMessageChunk(ctx context.Context,
 	return adapter(ctx, chunk)
 }
 
+// NativeStreamingChatModel is a ChatModel that can expose provider chunks to
+// a direct caller while also publishing them through graph message streams.
+// A nil emit callback is valid and still produces graph stream events when the
+// supplied Runtime has a message writer.
+type NativeStreamingChatModel[S any] interface {
+	ChatModel[S]
+	Stream(context.Context, S, graph.Runtime, func(AssistantMessageChunk) error) (AssistantMessage, error)
+}
+
 // StreamingChatModel adapts an SDK streaming callback into ChatModel. Every
 // chunk is published through Runtime.WriteMessage and merged into one final
 // AssistantMessage for graph state.
@@ -60,6 +69,9 @@ type StreamingChatModel[S, C any] struct {
 	Stream   func(context.Context, S, graph.Runtime, func(C) error) error
 	Adapter  MessageChunkAdapter[C]
 	Metadata map[string]any
+	// Emit observes normalized chunks after a stable message ID is assigned.
+	// Returning an error cancels assembly and the model invocation.
+	Emit func(AssistantMessageChunk) error
 }
 
 // Invoke implements ChatModel.
@@ -96,6 +108,11 @@ func (model StreamingChatModel[S, C]) Invoke(
 			chunk.ID = messageID
 		}
 		cloned := chunk.CloneMessage().(AssistantMessageChunk)
+		if model.Emit != nil {
+			if err := model.Emit(cloned); err != nil {
+				return err
+			}
+		}
 		chunks = append(chunks, cloned)
 		return runtime.WriteMessage(cloned, cloneChunkMetadata(model.Metadata))
 	})

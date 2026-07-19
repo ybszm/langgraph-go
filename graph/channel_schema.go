@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // CheckpointChannelBinding is one fixed, typed state-to-channel projection.

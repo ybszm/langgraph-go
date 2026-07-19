@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	temporaladapter "github.com/wahanbo/langgraph-go/backend/temporal"
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	temporaladapter "github.com/ybszm/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/checkpoint"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/workflow"
 )

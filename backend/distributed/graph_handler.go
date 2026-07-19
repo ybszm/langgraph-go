@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
-	lgstore "github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
+	lgstore "github.com/ybszm/langgraph-go/store"
 )
 
 // GraphTask is the serializable input needed to execute one graph node remotely.

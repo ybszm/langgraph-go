@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	cachememory "github.com/wahanbo/langgraph-go/cache/memory"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	cachememory "github.com/ybszm/langgraph-go/cache/memory"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestDefaultNodeTimeoutAppliesAtCompileAndExplicitWins(t *testing.T) {

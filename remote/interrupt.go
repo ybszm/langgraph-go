@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/backend/distributed"
 )
 
 // InterruptRecord is the remote alias of a distributed interrupt snapshot.

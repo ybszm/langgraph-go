@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/internal/storeutil"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/internal/storeutil"
 )
 
 // PythonStoreAdapter implements Store against langgraph-checkpoint-postgres

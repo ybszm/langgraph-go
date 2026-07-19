@@ -6,10 +6,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointmemory "github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/functional"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/functional"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type functionalNodeState struct{ Value int }

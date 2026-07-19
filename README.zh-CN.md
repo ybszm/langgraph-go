@@ -8,9 +8,9 @@
 
 **受 LangGraph 启发，为 Go 构建的强类型、可持久化图运行时。**
 
-[![CI](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/wahanbo/langgraph-go.svg)](https://pkg.go.dev/github.com/wahanbo/langgraph-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wahanbo/langgraph-go)](https://goreportcard.com/report/github.com/wahanbo/langgraph-go)
+[![CI](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ybszm/langgraph-go.svg)](https://pkg.go.dev/github.com/ybszm/langgraph-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ybszm/langgraph-go)](https://goreportcard.com/report/github.com/ybszm/langgraph-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
@@ -34,21 +34,21 @@ LangGraph Go 是由社区独立维护的 Go 实现，借鉴了
 - 静态边、条件边、等待边和动态 `Send` 边
 - `Command` 更新、动态路由、父图定向与持久化恢复
 - 带并发限制、重试、缓存、超时和取消的节点执行
-- 内存、SQLite 和 PostgreSQL checkpoint 实现
+- 内存、SQLite、PostgreSQL 和可选 Redis checkpoint 实现
 - 中断与恢复、重放、分支、时间旅行和嵌套子图
-- Values、Updates、Messages、Custom、Debug 和子图流式输出
+- Values、Updates、Messages、Custom、Debug 和子图流式输出，包括模型原生 SSE 分片
 - 带任务、Future、持久化和恢复能力的强类型 Functional API
 - 与模型供应商无关的 ToolNode 和 ReAct 风格 Agent 组件
-- 长期 Store、TTL、语义索引和向量后端
-- 可选 HTTP/SSE、分布式 PostgreSQL 与 Temporal 集成
+- 长期 Store、TTL、语义索引、向量后端、BM25/混合检索与上下文记忆中间件
+- 可选 HTTP/SSE、Redis、分布式 PostgreSQL 与 Temporal 集成
 
 ## 安装
 
 ```bash
-go get github.com/wahanbo/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@latest
 ```
 
-需要 Go 1.24 或更高版本。
+需要 Go 1.25 或更高版本。
 
 ## 快速开始
 
@@ -59,7 +59,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type State struct {
@@ -122,7 +122,10 @@ func main() {
 | `checkpoint/*` | 内存、SQLite、PostgreSQL checkpoint saver 与 codec |
 | `functional` | 持久化任务、Future 和强类型入口 |
 | `prebuilt` | 消息、ToolNode 和 ReAct 风格 Agent 组件 |
+| `retrieval` | 文本分块、BM25/向量/混合检索、摄取和 Retriever Tool |
+| `memory` | 滑动窗口、摘要和 RAG 上下文模型中间件 |
 | `store/*` | 长期键值存储、TTL、Embedding 与向量存储 |
+| `redis/*` | 可选 Redis checkpoint、长期 Store 和任务缓存模块 |
 | `remote` | 强类型 HTTP/SSE 服务端与客户端 |
 | `backend/distributed` | 租约队列、事件日志、中断和事务 Outbox |
 | `backend/temporal` | 与供应商无关的 Temporal Adapter 和可选官方 SDK Binding |
@@ -149,7 +152,7 @@ go vet ./...
 
 设置 `LANGGRAPH_POSTGRES_DSN` 可启用数据库集成测试；设置
 `LANGGRAPH_TEMPORAL_ADDRESS` 可启用 Temporal 集成测试。CI 会在 Linux 上运行单元测试、
-race detector、PostgreSQL 和 Temporal 检查。
+race detector、PostgreSQL、Redis 和 Temporal 检查。
 
 贡献流程请阅读 [`CONTRIBUTING.md`](CONTRIBUTING.md)，设计细节请阅读
 [`ARCHITECTURE.md`](ARCHITECTURE.md)。

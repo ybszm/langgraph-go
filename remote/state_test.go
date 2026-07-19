@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/remote"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/remote"
 )
 
 type remoteState struct{ Count int }

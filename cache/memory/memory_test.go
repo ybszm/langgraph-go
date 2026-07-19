@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/cache"
-	"github.com/wahanbo/langgraph-go/cache/memory"
+	"github.com/ybszm/langgraph-go/cache"
+	"github.com/ybszm/langgraph-go/cache/memory"
 )
 
 func TestStoreTTLIsolationAndClear(t *testing.T) {

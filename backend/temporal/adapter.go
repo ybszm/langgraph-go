@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ErrInvalidConfiguration identifies an invalid adapter dependency or request.

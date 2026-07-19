@@ -8,9 +8,9 @@
 
 **LangGraph에서 영감을 받은 Go용 타입 안전 영속 그래프 런타임.**
 
-[![CI](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/wahanbo/langgraph-go.svg)](https://pkg.go.dev/github.com/wahanbo/langgraph-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wahanbo/langgraph-go)](https://goreportcard.com/report/github.com/wahanbo/langgraph-go)
+[![CI](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ybszm/langgraph-go.svg)](https://pkg.go.dev/github.com/ybszm/langgraph-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ybszm/langgraph-go)](https://goreportcard.com/report/github.com/ybszm/langgraph-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
@@ -35,21 +35,21 @@ Python 패키지를 소스 수준에서 그대로 옮긴 포트도 아닙니다.
 - 정적, 조건부, 대기 및 동적 `Send` edge
 - `Command` 업데이트, 라우팅, 부모 그래프 지정과 영속 재개
 - 동시 실행 제한, 재시도, 캐시, 타임아웃과 취소
-- 메모리, SQLite, PostgreSQL checkpoint 구현
+- 메모리, SQLite, PostgreSQL 및 선택적 Redis checkpoint 구현
 - interrupt/resume, replay, branch, time travel과 중첩 subgraph
 - Values, Updates, Messages, Custom, Debug 및 subgraph 스트리밍
 - task, future, 영속성과 복구를 지원하는 타입 기반 Functional API
 - 공급자 중립적인 ToolNode와 ReAct 방식 Agent 구성 요소
 - 장기 Store, TTL, 의미 기반 인덱싱과 벡터 백엔드
-- 선택적 HTTP/SSE, 분산 PostgreSQL 및 Temporal 통합
+- 선택적 HTTP/SSE, Redis, 분산 PostgreSQL 및 Temporal 통합
 
 ## 설치
 
 ```bash
-go get github.com/wahanbo/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@latest
 ```
 
-Go 1.24 이상이 필요합니다.
+Go 1.25 이상이 필요합니다.
 
 ## 빠른 시작
 
@@ -60,7 +60,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type State struct {
@@ -123,7 +123,10 @@ func main() {
 | `checkpoint/*` | 메모리, SQLite, PostgreSQL checkpoint saver와 codec |
 | `functional` | 영속 task, future와 타입 기반 entrypoint |
 | `prebuilt` | Message, ToolNode와 ReAct 방식 Agent 구성 요소 |
+| `retrieval` | 텍스트 분할, BM25/vector/hybrid 검색, 수집과 Retriever Tool |
+| `memory` | sliding window, 요약과 RAG context 모델 middleware |
 | `store/*` | 장기 key/value, TTL, embedding과 vector store |
+| `redis/*` | 선택적 Redis checkpoint, 장기 Store 및 task cache |
 | `remote` | 타입 기반 HTTP/SSE 서버 및 클라이언트 |
 | `backend/distributed` | lease queue, event log, interrupt와 transactional outbox |
 | `backend/temporal` | 공급자 중립 Temporal adapter와 선택적 공식 SDK binding |
@@ -150,7 +153,7 @@ go vet ./...
 
 `LANGGRAPH_POSTGRES_DSN`을 설정하면 데이터베이스 통합 테스트가,
 `LANGGRAPH_TEMPORAL_ADDRESS`를 설정하면 Temporal 통합 테스트가 활성화됩니다.
-CI는 Linux에서 unit, race, PostgreSQL, Temporal 검사를 실행합니다.
+CI는 Linux에서 unit, race, PostgreSQL, Redis, Temporal 검사를 실행합니다.
 
 기여 절차는 [`CONTRIBUTING.md`](CONTRIBUTING.md), 설계 세부 사항은
 [`ARCHITECTURE.md`](ARCHITECTURE.md)를 참고하세요.

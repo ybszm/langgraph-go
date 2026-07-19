@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/remote"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/remote"
 )
 
 type fakeRemoteGraph struct {

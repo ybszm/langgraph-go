@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // StateGraph is the typed checkpoint state capability used by a state server.

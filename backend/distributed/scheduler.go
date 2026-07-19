@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // SchedulerError adds checkpoint and graph task context while preserving causes.

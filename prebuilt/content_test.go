@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 func TestContentBlocksValidateAndClone(t *testing.T) {

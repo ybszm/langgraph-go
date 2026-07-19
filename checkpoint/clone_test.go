@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 func TestCloneCheckpointIsolatesTaskTriggers(t *testing.T) {

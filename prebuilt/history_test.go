@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 func TestValidateChatHistoryRequiresToolResults(t *testing.T) {

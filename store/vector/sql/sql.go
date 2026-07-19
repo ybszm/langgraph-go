@@ -11,7 +11,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 // Dialect selects SQL placeholder and setup behavior.

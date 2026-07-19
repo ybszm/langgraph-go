@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // CheckpointResult describes one typed pending write at an exact checkpoint.

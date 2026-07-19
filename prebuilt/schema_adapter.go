@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ToolDefinition is a provider-neutral function/tool schema. InputSchema must

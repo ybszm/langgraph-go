@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 func EncodeNamespace(namespace store.Namespace) (string, error) {

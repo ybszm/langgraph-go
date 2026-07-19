@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/internal/storeutil"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/internal/storeutil"
 	_ "modernc.org/sqlite"
 )
 

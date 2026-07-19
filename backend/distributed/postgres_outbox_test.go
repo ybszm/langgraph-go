@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/backend/distributed"
 )
 
 func TestPostgresLeasedOutboxAtomicCommitAckAndRecovery(t *testing.T) {

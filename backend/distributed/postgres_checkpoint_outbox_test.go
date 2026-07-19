@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointpostgres "github.com/wahanbo/langgraph-go/checkpoint/postgres"
+	"github.com/ybszm/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointpostgres "github.com/ybszm/langgraph-go/checkpoint/postgres"
 )
 
 func TestPostgresCheckpointOutboxAtomicPendingWriteAndAck(t *testing.T) {

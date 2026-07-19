@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 func durableInterruptID(namespace, taskID string, index int) string {

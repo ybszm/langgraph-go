@@ -14,7 +14,7 @@ Thank you for helping improve LangGraph Go.
 
 Requirements:
 
-- Go 1.24 or newer
+- Go 1.25 or newer
 - Docker for PostgreSQL and Temporal integration tests
 
 Run the standard checks:

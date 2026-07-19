@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/store"
-	storepostgres "github.com/wahanbo/langgraph-go/store/postgres"
-	"github.com/wahanbo/langgraph-go/store/storetest"
+	"github.com/ybszm/langgraph-go/store"
+	storepostgres "github.com/ybszm/langgraph-go/store/postgres"
+	"github.com/ybszm/langgraph-go/store/storetest"
 )
 
 const postgresDSNEnv = "LANGGRAPH_POSTGRES_DSN"

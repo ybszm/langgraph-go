@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 var ErrSweeperRunning = errors.New("store TTL sweeper is already running")

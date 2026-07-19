@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/prebuilt"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
 type bindingModel struct {

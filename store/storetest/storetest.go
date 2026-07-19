@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 // Factory creates a fresh Store for one contract subtest. It should register

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/backend/temporal"
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type fakeCheckpointSaver struct {

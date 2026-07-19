@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/store"
-	vectorsql "github.com/wahanbo/langgraph-go/store/vector/sql"
-	"github.com/wahanbo/langgraph-go/store/vectortest"
+	"github.com/ybszm/langgraph-go/store"
+	vectorsql "github.com/ybszm/langgraph-go/store/vector/sql"
+	"github.com/ybszm/langgraph-go/store/vectortest"
 )
 
 func TestPostgresVectorIndexContract(t *testing.T) {

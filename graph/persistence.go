@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	lgstore "github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	lgstore "github.com/ybszm/langgraph-go/store"
 )
 
 const taskResultType = "langgraph.go/task-result"

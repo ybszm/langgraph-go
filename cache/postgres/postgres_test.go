@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/wahanbo/langgraph-go/cache"
-	cachepostgres "github.com/wahanbo/langgraph-go/cache/postgres"
+	"github.com/ybszm/langgraph-go/cache"
+	cachepostgres "github.com/ybszm/langgraph-go/cache/postgres"
 )
 
 func TestSetupUsesAdvisoryTransactionAndIsIdempotent(t *testing.T) {

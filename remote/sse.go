@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // ErrInvalidSSE identifies a malformed server-sent event response.

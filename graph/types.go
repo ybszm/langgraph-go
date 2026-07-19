@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	lgstore "github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	lgstore "github.com/ybszm/langgraph-go/store"
 )
 
 // NodeID uniquely identifies a node in a graph.

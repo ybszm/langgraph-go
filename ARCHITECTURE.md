@@ -46,13 +46,18 @@ graph ──────────────── core builder, compiler, s
 
 functional ─────────── durable task/entrypoint facade
 prebuilt ───────────── messages, tools, and agent components
+retrieval ──────────── provider-neutral ingestion and document retrieval
+memory ─────────────── model-context window, summary, and RAG projection
 remote ─────────────── HTTP/SSE transport and control plane
 backend/distributed ── leased PostgreSQL execution primitives
 backend/temporal ───── optional workflow-orchestrator adapter
 ```
 
-Core packages do not import model-provider SDKs. The official Temporal SDK is
-isolated under `backend/temporal/sdk`.
+Core packages do not import model-provider, MCP, OpenTelemetry, remote-server,
+Redis, or Temporal SDK dependencies. The `providers`, `mcpclient`, `remote`,
+`observability/otel`, `redis`, and `backend/temporal` integrations are separate Go
+modules in one development workspace, so applications pay only for modules
+they import. The provider-neutral agent contracts remain in `prebuilt`.
 
 ## Graph compilation
 
@@ -93,7 +98,9 @@ nested subgraph continuation without mutating earlier history.
 
 The runtime exposes typed values, updates, messages, custom events, debug events,
 interrupts, and terminal events. Streams use bounded channels, propagate
-cancellation, and include subgraph namespaces when requested.
+cancellation, and include subgraph namespaces when requested. Provider adapters
+normalize native SSE text, tool-call, finish, and usage fragments into
+`AssistantMessageChunk` message events before merging the final model response.
 
 ## Optional production backends
 

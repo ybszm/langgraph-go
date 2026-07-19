@@ -8,7 +8,7 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 const commandEnvelopeType = "langgraph.go/command"

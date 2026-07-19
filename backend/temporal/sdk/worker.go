@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	temporaladapter "github.com/wahanbo/langgraph-go/backend/temporal"
+	temporaladapter "github.com/ybszm/langgraph-go/backend/temporal"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

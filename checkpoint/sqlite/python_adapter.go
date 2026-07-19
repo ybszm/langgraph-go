@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 type PythonCheckpointSerializer = checkpoint.PythonCheckpointSerializer

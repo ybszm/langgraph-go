@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
-	vectorsql "github.com/wahanbo/langgraph-go/store/vector/sql"
-	"github.com/wahanbo/langgraph-go/store/vectortest"
+	"github.com/ybszm/langgraph-go/store"
+	vectorsql "github.com/ybszm/langgraph-go/store/vector/sql"
+	"github.com/ybszm/langgraph-go/store/vectortest"
 	_ "modernc.org/sqlite"
 )
 

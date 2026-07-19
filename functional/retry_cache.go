@@ -11,9 +11,9 @@ import (
 	"math/rand/v2"
 	"time"
 
-	cachepkg "github.com/wahanbo/langgraph-go/cache"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	"github.com/wahanbo/langgraph-go/graph"
+	cachepkg "github.com/ybszm/langgraph-go/cache"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // TaskCachePolicy configures serialized task result caching.

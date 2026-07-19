@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/remote"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/remote"
 )
 
 type commandState struct {

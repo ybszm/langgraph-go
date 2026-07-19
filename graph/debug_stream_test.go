@@ -8,10 +8,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	cachememory "github.com/wahanbo/langgraph-go/cache/memory"
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointmemory "github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/graph"
+	cachememory "github.com/ybszm/langgraph-go/cache/memory"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestDebugStreamTaskResultAndCheckpointLifecycle(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointsqlite "github.com/wahanbo/langgraph-go/checkpoint/sqlite"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointsqlite "github.com/ybszm/langgraph-go/checkpoint/sqlite"
 )
 
 func TestPythonAdapterReadsAndWritesUpstream12_9Rows(t *testing.T) {

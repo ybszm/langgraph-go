@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	temporaladapter "github.com/wahanbo/langgraph-go/backend/temporal"
+	temporaladapter "github.com/ybszm/langgraph-go/backend/temporal"
 	"go.temporal.io/sdk/client"
 )
 

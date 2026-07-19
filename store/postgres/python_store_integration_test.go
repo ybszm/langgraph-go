@@ -11,8 +11,8 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/store"
-	storepostgres "github.com/wahanbo/langgraph-go/store/postgres"
+	"github.com/ybszm/langgraph-go/store"
+	storepostgres "github.com/ybszm/langgraph-go/store/postgres"
 )
 
 func pythonStoreFixture(t *testing.T, mode, dsn, scope string) []byte {

@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 // CommandInvoker is implemented by graphs accepting invocation-time

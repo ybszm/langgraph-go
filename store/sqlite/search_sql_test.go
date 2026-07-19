@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store"
 )
 
 func TestBuildSearchQueryPushesSafePredicates(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type inspectionSchemaState struct {

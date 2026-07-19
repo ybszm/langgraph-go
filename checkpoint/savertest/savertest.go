@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 // Factory creates a fresh Saver for one contract subtest. The factory should

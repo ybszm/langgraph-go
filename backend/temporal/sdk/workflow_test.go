@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	temporaladapter "github.com/wahanbo/langgraph-go/backend/temporal"
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	temporaladapter "github.com/ybszm/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/checkpoint"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 )

@@ -8,10 +8,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/store"
-	"github.com/wahanbo/langgraph-go/store/indexed"
-	storememory "github.com/wahanbo/langgraph-go/store/memory"
-	vectormemory "github.com/wahanbo/langgraph-go/store/vector/memory"
+	"github.com/ybszm/langgraph-go/store"
+	"github.com/ybszm/langgraph-go/store/indexed"
+	storememory "github.com/ybszm/langgraph-go/store/memory"
+	vectormemory "github.com/ybszm/langgraph-go/store/vector/memory"
 )
 
 type fakeEmbedder struct {

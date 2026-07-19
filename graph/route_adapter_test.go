@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func TestResolveTasksExposesCompiledRoutingWithoutExecution(t *testing.T) {

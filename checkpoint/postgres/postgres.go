@@ -17,7 +17,7 @@ import (
 	"sync"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/wahanbo/langgraph-go/checkpoint"
+	"github.com/ybszm/langgraph-go/checkpoint"
 )
 
 const schemaVersion = 2

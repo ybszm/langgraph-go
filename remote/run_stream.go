@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/backend/distributed"
 )
 
 func (s *Server[I, O]) streamRemoteRun(writer http.ResponseWriter, request *http.Request, threadID, runID string) {

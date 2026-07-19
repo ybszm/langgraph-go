@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/wahanbo/langgraph-go/checkpoint"
-	checkpointmemory "github.com/wahanbo/langgraph-go/checkpoint/memory"
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 func validationChild(t *testing.T, options ...graph.CompileOption[customState, customDelta]) *graph.CompiledGraph[customState, customDelta] {

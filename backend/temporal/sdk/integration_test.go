@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	temporaladapter "github.com/wahanbo/langgraph-go/backend/temporal"
-	"github.com/wahanbo/langgraph-go/graph"
+	temporaladapter "github.com/ybszm/langgraph-go/backend/temporal"
+	"github.com/ybszm/langgraph-go/graph"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"

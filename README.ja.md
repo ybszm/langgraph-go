@@ -8,9 +8,9 @@
 
 **LangGraph に着想を得た、Go 向けの型安全で永続化可能なグラフランタイム。**
 
-[![CI](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/wahanbo/langgraph-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/wahanbo/langgraph-go.svg)](https://pkg.go.dev/github.com/wahanbo/langgraph-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wahanbo/langgraph-go)](https://goreportcard.com/report/github.com/wahanbo/langgraph-go)
+[![CI](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml/badge.svg)](https://github.com/ybszm/langgraph-go/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ybszm/langgraph-go.svg)](https://pkg.go.dev/github.com/ybszm/langgraph-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ybszm/langgraph-go)](https://goreportcard.com/report/github.com/ybszm/langgraph-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
@@ -35,21 +35,21 @@ Python パッケージのソースコードをそのまま移植したもので�
 - 静的、条件付き、待機、動的 `Send` エッジ
 - `Command` 更新、ルーティング、親グラフ指定、永続的な再開
 - 同時実行数制限、リトライ、キャッシュ、タイムアウト、キャンセル
-- メモリ、SQLite、PostgreSQL の checkpoint 実装
+- メモリ、SQLite、PostgreSQL、オプションの Redis checkpoint 実装
 - interrupt/resume、replay、branch、time travel、ネストした subgraph
 - Values、Updates、Messages、Custom、Debug、subgraph ストリーミング
 - task、future、永続化、復旧に対応する型付き Functional API
 - プロバイダー非依存の ToolNode と ReAct 形式の Agent 部品
 - 長期 Store、TTL、セマンティックインデックス、ベクトルバックエンド
-- オプションの HTTP/SSE、分散 PostgreSQL、Temporal 連携
+- オプションの HTTP/SSE、Redis、分散 PostgreSQL、Temporal 連携
 
 ## インストール
 
 ```bash
-go get github.com/wahanbo/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@latest
 ```
 
-Go 1.24 以降が必要です。
+Go 1.25 以降が必要です。
 
 ## クイックスタート
 
@@ -60,7 +60,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wahanbo/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/graph"
 )
 
 type State struct {
@@ -123,7 +123,10 @@ func main() {
 | `checkpoint/*` | メモリ、SQLite、PostgreSQL の checkpoint saver と codec |
 | `functional` | 永続化 task、future、型付き entrypoint |
 | `prebuilt` | Message、ToolNode、ReAct 形式の Agent 部品 |
+| `retrieval` | テキスト分割、BM25/vector/hybrid 検索、取り込み、Retriever Tool |
+| `memory` | sliding window、要約、RAG context の model middleware |
 | `store/*` | 長期 key/value、TTL、embedding、vector store |
+| `redis/*` | オプションの Redis checkpoint、長期 Store、task cache |
 | `remote` | 型付き HTTP/SSE サーバーおよびクライアント |
 | `backend/distributed` | lease queue、event log、interrupt、transactional outbox |
 | `backend/temporal` | プロバイダー非依存の Temporal adapter と任意の公式 SDK binding |
@@ -150,7 +153,7 @@ go vet ./...
 
 `LANGGRAPH_POSTGRES_DSN` を設定するとデータベース統合テスト、
 `LANGGRAPH_TEMPORAL_ADDRESS` を設定すると Temporal 統合テストが有効になります。
-CI は Linux 上で unit、race、PostgreSQL、Temporal の各テストを実行します。
+CI は Linux 上で unit、race、PostgreSQL、Redis、Temporal の各テストを実行します。
 
 コントリビューション手順は [`CONTRIBUTING.md`](CONTRIBUTING.md)、設計の詳細は
 [`ARCHITECTURE.md`](ARCHITECTURE.md) を参照してください。

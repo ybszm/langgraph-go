@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wahanbo/langgraph-go/backend/distributed"
-	"github.com/wahanbo/langgraph-go/graph"
-	"github.com/wahanbo/langgraph-go/remote"
+	"github.com/ybszm/langgraph-go/backend/distributed"
+	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/remote"
 )
 
 func TestRemoteListsAndResumesDistributedInterrupt(t *testing.T) {
