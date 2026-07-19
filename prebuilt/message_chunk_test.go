@@ -98,3 +98,29 @@ func TestMergeAssistantMessageChunksRejectsProtocolDrift(t *testing.T) {
 		t.Fatalf("canceled err=%v", err)
 	}
 }
+
+func TestStreamingChatModelObserverReceivesStableGeneratedID(t *testing.T) {
+	var observed []prebuilt.AssistantMessageChunk
+	model := prebuilt.StreamingChatModel[int, string]{
+		Adapter: prebuilt.MessageChunkAdapterFunc[string](func(_ context.Context, text string) (prebuilt.AssistantMessageChunk, error) {
+			return prebuilt.AssistantMessageChunk{Content: text}, nil
+		}),
+		Emit: func(chunk prebuilt.AssistantMessageChunk) error {
+			observed = append(observed, chunk)
+			return nil
+		},
+		Stream: func(_ context.Context, _ int, _ graph.Runtime, emit func(string) error) error {
+			if err := emit("one"); err != nil {
+				return err
+			}
+			return emit(" two")
+		},
+	}
+	message, err := model.Invoke(context.Background(), 0, graph.Runtime{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(observed) != 2 || observed[0].ID == "" || observed[0].ID != observed[1].ID || message.ID != observed[0].ID || message.Content != "one two" {
+		t.Fatalf("observed=%+v message=%+v", observed, message)
+	}
+}

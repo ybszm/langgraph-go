@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/langgraph-go-hero.png" alt="LangGraph Go execution graph" width="100%" />
+<img src="docs/assets/langgraph-go-hero-v2.png" alt="LangGraph Go execution, checkpoints, and retrieval graph" width="100%" />
 
 # LangGraph Go
 
@@ -37,13 +37,15 @@ LangChain product and is not a source-to-source port of the Python package.
 - Static, conditional, waiting, and dynamic `Send` edges
 - `Command` updates, routing, parent targeting, and durable resume
 - Concurrent nodes with limits, retries, caching, timeouts, and cancellation
-- Checkpointing with memory, SQLite, and PostgreSQL implementations
+- Checkpointing with memory, SQLite, PostgreSQL, and optional Redis implementations
 - Interrupt/resume, replay, branching, time travel, and nested subgraphs
-- Values, updates, messages, custom, debug, and subgraph streaming
+- Values, updates, messages, custom, debug, and subgraph streaming, including native provider chunks
 - Typed Functional API with tasks, futures, persistence, and recovery
 - Provider-neutral ToolNode and ReAct-style agent building blocks
-- Long-term stores, TTL, semantic indexing, and vector backends
-- Optional HTTP/SSE, distributed PostgreSQL, and Temporal integrations
+- Ten optional model adapters, MCP tools, and agent-as-tool composition
+- OpenTelemetry callbacks and a dependency-free local trace viewer
+- Long-term stores, TTL, semantic indexing, vector backends, BM25/hybrid retrieval, and context memory middleware
+- Optional HTTP/SSE, Redis, distributed PostgreSQL, and Temporal integrations
 
 ## Install
 
@@ -51,7 +53,7 @@ LangChain product and is not a source-to-source port of the Python package.
 go get github.com/wahanbo/langgraph-go@latest
 ```
 
-Go 1.24 or newer is required.
+Go 1.25 or newer is required.
 
 ## Quick start
 
@@ -124,11 +126,29 @@ The runnable example is available at [`examples/basic`](examples/basic).
 | `channel` | Pregel-style typed channel primitives |
 | `checkpoint/*` | Memory, SQLite, and PostgreSQL checkpoint savers and codecs |
 | `functional` | Durable tasks, futures, and typed entrypoints |
-| `prebuilt` | Messages, ToolNode, and ReAct-style agent components |
+| `prebuilt` | Messages, ToolNode, `NewAgent`, ReAct, and agent-as-tool components |
+| `retrieval` | Text splitting, BM25/vector/hybrid retrieval, ingestion, and retriever-as-tool |
+| `memory` | Sliding-window, summarization, and retrieval-context model middleware |
 | `store/*` | Long-term key/value, TTL, embedding, and vector stores |
-| `remote` | Typed HTTP/SSE server and client |
+| `redis/*` | Optional Redis checkpoint, long-term store, and task cache module |
+| `providers/*` | Ten optional model-provider adapters (separate module) |
+| `mcpclient` | Official-SDK MCP tool client (separate module) |
+| `remote` | Typed HTTP/SSE server, client, and local trace UI (separate module) |
+| `observability/otel` | OpenTelemetry graph callbacks (separate module) |
 | `backend/distributed` | Leased queues, event logs, interrupts, and transactional outboxes |
-| `backend/temporal` | Provider-neutral Temporal adapter and optional official SDK binding |
+| `backend/temporal` | Temporal adapter and official SDK binding (separate module) |
+
+## Retrieval and context memory
+
+The lightweight `retrieval` package can be used as a ReAct tool or as model
+middleware. `memory.NewWindow` and `memory.NewSummary` project bounded context
+without deleting durable graph history; `memory.NewRetrieval` injects ranked
+documents only for the current model call. BM25 works without credentials, and
+vector retrieval composes with the existing `store.Embedder` and
+`store.VectorIndex` contracts.
+
+See the credential-free [`examples/retrieval-memory`](examples/retrieval-memory)
+program for an end-to-end composition.
 
 ## Compatibility boundaries
 
@@ -152,12 +172,20 @@ go test ./...
 go vet ./...
 ```
 
+This repository is a Go workspace. Run the same commands from `providers`,
+`mcpclient`, `remote`, `observability/otel`, and `backend/temporal` when changing
+an optional module. Go 1.25 or newer is required across the workspace.
+
 Database integration tests are enabled with `LANGGRAPH_POSTGRES_DSN`. Temporal
 integration is enabled with `LANGGRAPH_TEMPORAL_ADDRESS`. The CI workflow runs
-unit, race, PostgreSQL, and Temporal checks on Linux.
+unit, race, PostgreSQL, Redis, and Temporal checks on Linux.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution workflow and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for design details.
+
+Eleven credential-free, executable workflows are indexed in
+[`examples/README.md`](examples/README.md). Release coordination and the
+pre-1.0 compatibility policy are documented in [`RELEASING.md`](RELEASING.md).
 
 ## Project status and support
 
