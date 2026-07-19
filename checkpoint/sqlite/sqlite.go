@@ -26,8 +26,8 @@ import (
 const schemaVersion = 2
 
 var schemaStatements = []string{
-	`PRAGMA journal_mode=WAL`,
 	`PRAGMA busy_timeout=5000`,
+	`PRAGMA journal_mode=WAL`,
 	`CREATE TABLE IF NOT EXISTS checkpoint_migrations (
 		version INTEGER PRIMARY KEY
 	)`,

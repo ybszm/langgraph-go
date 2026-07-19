@@ -302,7 +302,7 @@ func (l *PostgresEventLog) Tail(ctx context.Context, query EventQuery) <-chan Ev
 			if len(events) > 0 {
 				continue
 			}
-			terminal, err := l.streamTerminal(ctx, query.ThreadID, query.RunID)
+			terminal, err := l.streamTerminalAtCursor(ctx, query.ThreadID, query.RunID, after)
 			if err != nil {
 				select {
 				case output <- EventResult{Error: err}:
@@ -324,13 +324,24 @@ func (l *PostgresEventLog) Tail(ctx context.Context, query EventQuery) <-chan Ev
 	}()
 	return output
 }
-func (l *PostgresEventLog) streamTerminal(ctx context.Context, threadID, runID string) (bool, error) {
+func (l *PostgresEventLog) streamTerminalAtCursor(ctx context.Context, threadID, runID, afterID string) (bool, error) {
 	var terminal bool
-	err := l.db.QueryRowContext(ctx, `SELECT terminal FROM distributed_event_streams WHERE thread_id=$1 AND run_id=$2`, threadID, runID).Scan(&terminal)
+	var latestID string
+	err := l.db.QueryRowContext(ctx, `
+		SELECT s.terminal, COALESCE((
+			SELECT e.id
+			FROM distributed_events e
+			WHERE e.thread_id=s.thread_id AND e.run_id=s.run_id
+			ORDER BY e.sequence DESC
+			LIMIT 1
+		), '')
+		FROM distributed_event_streams s
+		WHERE s.thread_id=$1 AND s.run_id=$2
+	`, threadID, runID).Scan(&terminal, &latestID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
-	return terminal, err
+	return terminal && latestID == afterID, err
 }
 
 // Prune removes complete event streams older than before in one transaction.
