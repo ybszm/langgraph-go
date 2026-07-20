@@ -126,7 +126,7 @@ The runnable example is available at [`examples/basic`](examples/basic).
 | `channel` | Pregel-style typed channel primitives |
 | `checkpoint/*` | Memory, SQLite, and PostgreSQL checkpoint savers and codecs |
 | `functional` | Durable tasks, futures, and typed entrypoints |
-| `prebuilt` | Messages, ToolNode, `NewAgent`, ReAct, and agent-as-tool components |
+| `prebuilt` | Messages, ToolNode, `ChatModelAgent`, `DeepAgent`, multi-agent coordination, and ReAct components |
 | `retrieval` | Text splitting, BM25/vector/hybrid retrieval, ingestion, and retriever-as-tool |
 | `memory` | Sliding-window, summarization, and retrieval-context model middleware |
 | `store/*` | Long-term key/value, TTL, embedding, and vector stores |
@@ -149,6 +149,31 @@ vector retrieval composes with the existing `store.Embedder` and
 
 See the credential-free [`examples/retrieval-memory`](examples/retrieval-memory)
 program for an end-to-end composition.
+
+## Agent harnesses
+
+`prebuilt.NewChatModelAgent` is the shortest path from a provider-neutral chat
+model to a runnable agent: it supplies checkpoint-safe message state, prompt
+injection, ReAct tool execution, and a text-oriented `Run` method.
+
+For complex work, `prebuilt.NewDeepAgent` adds a `write_todos` planning tool and
+a `task` delegation tool. It creates a general-purpose isolated worker by
+default, accepts specialized `SubAgent` values, and executes multiple task calls
+concurrently through ToolNode. `NewMultiAgentCoordinator` exposes the same
+supervisor pattern without the planning harness. In both cases the supervisor
+receives only each worker's final response, keeping intermediate context out of
+the main conversation.
+
+`NewRouterAgent` provides a selective one-pass fan-out/synthesis pattern, while
+`NewHandoffAgent` persists the active persona as models transfer direct control.
+`FallbackChatModel` composes ordered model/provider failover. Agent-level
+streaming forwards subagent chunks with worker metadata, and agent callbacks
+cover model, individual tool, and delegation boundaries.
+
+See the credential-free [`examples/multi-agent`](examples/multi-agent) program
+for the complete ChatModelAgent + DeepAgent + parallel coordination flow.
+The [documentation index](docs/README.md) links dedicated agent, streaming, and
+callback guides.
 
 ## Compatibility boundaries
 
@@ -183,7 +208,7 @@ unit, race, PostgreSQL, Redis, and Temporal checks on Linux.
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution workflow and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for design details.
 
-Eleven credential-free, executable workflows are indexed in
+Eighteen credential-free, executable workflows are indexed in
 [`examples/README.md`](examples/README.md). Release coordination and the
 pre-1.0 compatibility policy are documented in [`RELEASING.md`](RELEASING.md).
 
