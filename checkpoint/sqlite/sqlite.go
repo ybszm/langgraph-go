@@ -491,6 +491,83 @@ func (s *Saver) DeleteThread(ctx context.Context, threadID string) error {
 	return nil
 }
 
+// PruneThread implements retention.ThreadPruner. It keeps the newest keepLatest
+// checkpoint IDs for the thread (all namespaces) and deletes older rows.
+func (s *Saver) PruneThread(ctx context.Context, threadID string, keepLatest int) (int, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	if threadID == "" {
+		return 0, fmt.Errorf("%w: thread ID is empty", checkpoint.ErrInvalidConfig)
+	}
+	if keepLatest < 0 {
+		return 0, fmt.Errorf("%w: keepLatest cannot be negative", checkpoint.ErrInvalidConfig)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.setupLocked(ctx); err != nil {
+		return 0, err
+	}
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT DISTINCT checkpoint_id FROM checkpoints WHERE thread_id=? ORDER BY checkpoint_id DESC`,
+		threadID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("list SQLite checkpoint IDs for prune: %w", err)
+	}
+	ids := make([]string, 0)
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			_ = rows.Close()
+			return 0, fmt.Errorf("scan SQLite checkpoint ID: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return 0, err
+	}
+	if err := rows.Close(); err != nil {
+		return 0, err
+	}
+	if keepLatest > 0 && len(ids) <= keepLatest {
+		return 0, nil
+	}
+	drop := ids
+	if keepLatest > 0 {
+		drop = ids[keepLatest:]
+	}
+	if len(drop) == 0 {
+		return 0, nil
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin SQLite prune: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	removed := 0
+	for _, id := range drop {
+		// Writes and checkpoint rows are keyed by checkpoint_id; blobs are
+		// versioned separately and cleaned opportunistically with the row set.
+		res, err := tx.ExecContext(ctx, `DELETE FROM checkpoint_writes WHERE thread_id=? AND checkpoint_id=?`, threadID, id)
+		if err != nil {
+			return 0, fmt.Errorf("prune SQLite writes %q: %w", id, err)
+		}
+		_, _ = res.RowsAffected()
+		res, err = tx.ExecContext(ctx, `DELETE FROM checkpoints WHERE thread_id=? AND checkpoint_id=?`, threadID, id)
+		if err != nil {
+			return 0, fmt.Errorf("prune SQLite checkpoint %q: %w", id, err)
+		}
+		n, _ := res.RowsAffected()
+		removed += int(n)
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit SQLite prune: %w", err)
+	}
+	return removed, nil
+}
+
 type storedRecord struct {
 	config       checkpoint.Config
 	parentID     string

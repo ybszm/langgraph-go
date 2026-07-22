@@ -551,9 +551,11 @@ func (g *StateGraph[S, D]) Compile(
 		}
 	}
 
-	for id := range g.nodes {
-		if _, ok := reachable[id]; !ok {
-			return nil, fmt.Errorf("%w: node %q is unreachable from START", ErrInvalidGraph, id)
+	if !compileOptions.allowUnreachable {
+		for id := range g.nodes {
+			if _, ok := reachable[id]; !ok {
+				return nil, fmt.Errorf("%w: node %q is unreachable from START", ErrInvalidGraph, id)
+			}
 		}
 	}
 	for node, reads := range g.nodeChannelReads {
@@ -570,8 +572,10 @@ func (g *StateGraph[S, D]) Compile(
 			}
 		}
 	}
-	if _, endReachable := reachable[END]; !endReachable {
-		return nil, fmt.Errorf("%w: END is unreachable from START", ErrInvalidGraph)
+	if !compileOptions.allowUnreachableEND {
+		if _, endReachable := reachable[END]; !endReachable {
+			return nil, fmt.Errorf("%w: END is unreachable from START", ErrInvalidGraph)
+		}
 	}
 	var contextType reflect.Type
 	if compileOptions.contextSchema != nil {

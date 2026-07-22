@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/langgraph-go-hero.png" alt="LangGraph Go 执行图" width="100%" />
+<img src="docs/assets/langgraph-go-hero-v2.png" alt="LangGraph Go 执行、checkpoint 与检索图" width="100%" />
 
 # LangGraph Go
 
@@ -25,7 +25,16 @@ LangGraph Go 是由社区独立维护的 Go 实现，借鉴了
 
 > [!IMPORTANT]
 > 项目仍在积极开发中。核心工作流已经可用并经过大量测试，但尚未完整复现全部
-> Python API。在将其视为直接替代品之前，请先阅读[兼容性说明](COMPATIBILITY.md)。
+> Python API。在将其视为直接替代品之前，请先阅读[兼容性说明](COMPATIBILITY.md)
+> 与[持久化语义](docs/DURABILITY.md)。
+
+## 仓库目录说明
+
+- **核心 Go 运行时**：仓库根目录包（`graph`、`checkpoint`、`prebuilt` 等）以及
+  `go.work` 中的可选 module。
+- **`python学习文档/`**：**独立教学项目**（Python MiniGraph + 小规模 Go 对照实现），
+  不被已发布 module 引用，也**不能**当作主库 API 文档。生产向用法请从根 README
+  与 `examples/` 入手。
 
 ## 主要能力
 
@@ -121,7 +130,7 @@ func main() {
 | `channel` | Pregel 风格强类型 Channel 原语 |
 | `checkpoint/*` | 内存、SQLite、PostgreSQL checkpoint saver 与 codec |
 | `functional` | 持久化任务、Future 和强类型入口 |
-| `prebuilt` | 消息、ToolNode 和 ReAct 风格 Agent 组件 |
+| `prebuilt` | 消息、ToolNode、`ChatModelAgent`、`DeepAgent`、多 Agent 协调和 ReAct 组件 |
 | `retrieval` | 文本分块、BM25/向量/混合检索、摄取和 Retriever Tool |
 | `memory` | 滑动窗口、摘要和 RAG 上下文模型中间件 |
 | `store/*` | 长期键值存储、TTL、Embedding 与向量存储 |
@@ -129,6 +138,31 @@ func main() {
 | `remote` | 强类型 HTTP/SSE 服务端与客户端 |
 | `backend/distributed` | 租约队列、事件日志、中断和事务 Outbox |
 | `backend/temporal` | 与供应商无关的 Temporal Adapter 和可选官方 SDK Binding |
+
+## 开箱即用的 Agent
+
+`prebuilt.NewChatModelAgent` 为单模型 Agent 提供默认的可持久化消息状态、系统提示词注入、
+ReAct 工具循环和面向文本输入的 `Run` 方法，无需自行声明 State、Delta、Reducer 与 Adapter。
+
+`prebuilt.NewAgentRunner` 是 ChatModelAgent、DeepAgent、Router、Supervisor 和 Handoff
+共用的应用层执行入口。`Query` 默认只暴露消息、自定义数据、中断、完成和错误事件，应用无需理解
+Graph StreamMode；`Resume` 使用同一事件模型继续可持久化的人机协作会话。
+
+复杂任务可以使用 `prebuilt.NewDeepAgent`。它默认加入 `write_todos` 计划工具和 `task`
+委派工具，并自动提供一个上下文隔离的通用子 Agent；也可以注册使用不同模型、提示词和工具集的
+专用 `SubAgent`。模型在同一轮发出多个 `task` 调用时，现有 ToolNode 会并行执行这些任务，
+再按调用顺序把最终结果交给主 Agent 汇总。只需要 Supervisor/Worker 模式时，可以直接使用
+`NewMultiAgentCoordinator`。
+
+此外，`NewRouterAgent` 提供单轮分类、并行分发与汇总，`NewHandoffAgent` 将当前 Agent
+作为可 checkpoint 的状态并支持直接交接，`FallbackChatModel` 提供模型/供应商顺序降级。
+Agent streaming 会透传带子 Agent 标识的消息块，自定义 callbacks 可以观察模型、单个工具和
+委派生命周期。
+
+先运行无凭据的 [`examples/agent-runner`](examples/agent-runner)，再通过
+[`examples/multi-agent`](examples/multi-agent) 查看完整的 ChatModelAgent、DeepAgent 与并行协调；
+设计与持久化子 Agent 配置见 [`docs/agents.md`](docs/agents.md)。
+完整文档入口见 [`docs/README.md`](docs/README.md)，其中包含 streaming 与 callbacks 专题。
 
 ## 兼容性边界
 

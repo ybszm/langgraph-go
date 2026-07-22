@@ -6,6 +6,16 @@ coverage
 *.prof
 .gocache/
 dist/
+*.exe
+
+# Python teaching tree local artifacts
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
 
 # Editors and operating systems
 .idea/

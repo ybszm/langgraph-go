@@ -267,6 +267,57 @@ func (s *Saver) DeleteThread(ctx context.Context, threadID string) error {
 	return nil
 }
 
+// PruneThread implements retention.ThreadPruner. It keeps the newest keepLatest
+// checkpoints for the thread (all namespaces) and deletes older ones.
+func (s *Saver) PruneThread(ctx context.Context, threadID string, keepLatest int) (int, error) {
+	if err := ctxError(ctx); err != nil {
+		return 0, err
+	}
+	if threadID == "" {
+		return 0, fmt.Errorf("%w: thread ID is empty", checkpoint.ErrInvalidConfig)
+	}
+	if keepLatest < 0 {
+		return 0, fmt.Errorf("%w: keepLatest cannot be negative", checkpoint.ErrInvalidConfig)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	keys := make([]checkpointKey, 0)
+	for key := range s.storage {
+		if key.threadID == threadID {
+			keys = append(keys, key)
+		}
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].id > keys[j].id
+	})
+	if keepLatest == 0 {
+		removed := 0
+		for _, key := range keys {
+			delete(s.storage, key)
+			delete(s.writes, key)
+			removed++
+		}
+		for key := range s.blobs {
+			if key.threadID == threadID {
+				delete(s.blobs, key)
+			}
+		}
+		return removed, nil
+	}
+	if len(keys) <= keepLatest {
+		return 0, nil
+	}
+	removed := 0
+	for _, key := range keys[keepLatest:] {
+		delete(s.storage, key)
+		delete(s.writes, key)
+		removed++
+	}
+	// Drop orphaned blobs for deleted checkpoint versions is best-effort: blob
+	// keys are versioned channels, not checkpoint IDs. Full GC can run later.
+	return removed, nil
+}
+
 func (s *Saver) findKeyLocked(config checkpoint.Config) (checkpointKey, bool) {
 	if config.CheckpointID != "" {
 		key := checkpointKey{
