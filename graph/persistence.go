@@ -30,12 +30,34 @@ type PersistenceConfig[S, D any] struct {
 type CompileOption[S, D any] func(*compileConfig[S, D]) error
 
 type compileConfig[S, D any] struct {
-	persistence     *persistenceRuntime[S, D]
-	cache           *cacheRuntime[S, D]
-	store           lgstore.Store
-	interruptBefore map[NodeID]struct{}
-	interruptAfter  map[NodeID]struct{}
-	contextSchema   *runtimeContextSchema
+	persistence          *persistenceRuntime[S, D]
+	cache                *cacheRuntime[S, D]
+	store                lgstore.Store
+	interruptBefore      map[NodeID]struct{}
+	interruptAfter       map[NodeID]struct{}
+	contextSchema        *runtimeContextSchema
+	allowUnreachable     bool
+	allowUnreachableEND  bool
+}
+
+// WithAllowUnreachableNodes skips the “every node must be reachable from START”
+// compile check. Useful when migrating Python graphs that keep helper nodes
+// offline, or when wiring destinations only through runtime Command/Send.
+// END reachability is still required unless WithAllowUnreachableEND is also set.
+func WithAllowUnreachableNodes[S, D any]() CompileOption[S, D] {
+	return func(target *compileConfig[S, D]) error {
+		target.allowUnreachable = true
+		return nil
+	}
+}
+
+// WithAllowUnreachableEND permits compiling graphs that never reach END
+// (long-running loops that only interrupt or await external resume).
+func WithAllowUnreachableEND[S, D any]() CompileOption[S, D] {
+	return func(target *compileConfig[S, D]) error {
+		target.allowUnreachableEND = true
+		return nil
+	}
 }
 
 type runtimeContextSchema struct {

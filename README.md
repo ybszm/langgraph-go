@@ -28,7 +28,17 @@ LangChain product and is not a source-to-source port of the Python package.
 > [!IMPORTANT]
 > The project is under active development. Core workflows are usable and
 > extensively tested, but the complete Python API is not yet reproduced. See
-> [Compatibility](COMPATIBILITY.md) before adopting it as a drop-in replacement.
+> [Compatibility](COMPATIBILITY.md) and [Durability](docs/DURABILITY.md) before
+> adopting it as a drop-in replacement.
+
+## Repository layout notes
+
+- **Core Go runtime**: packages at the repo root (`graph`, `checkpoint`,
+  `prebuilt`, …) and optional modules listed in `go.work`.
+- **`python学习文档/`**: a **standalone teaching project** (Python MiniGraph + a
+  small Go runtime rewrite). It is not imported by the published modules and is
+  not a substitute for the main library API. Start with the root README examples
+  or `examples/` for production-oriented usage.
 
 ## Highlights
 
@@ -156,6 +166,13 @@ program for an end-to-end composition.
 model to a runnable agent: it supplies checkpoint-safe message state, prompt
 injection, ReAct tool execution, and a text-oriented `Run` method.
 
+`prebuilt.NewAgentRunner` is the application-facing execution facade shared by
+ChatModelAgent, DeepAgent, Router, Supervisor, and Handoff harnesses. Its
+`Query` method emits high-level message, custom, interrupt, done, and error
+events without requiring applications to understand graph stream modes;
+`Resume` continues durable human-in-the-loop sessions through the same event
+contract.
+
 For complex work, `prebuilt.NewDeepAgent` adds a `write_todos` planning tool and
 a `task` delegation tool. It creates a general-purpose isolated worker by
 default, accepts specialized `SubAgent` values, and executes multiple task calls
@@ -170,8 +187,9 @@ the main conversation.
 streaming forwards subagent chunks with worker metadata, and agent callbacks
 cover model, individual tool, and delegation boundaries.
 
-See the credential-free [`examples/multi-agent`](examples/multi-agent) program
-for the complete ChatModelAgent + DeepAgent + parallel coordination flow.
+Start with the credential-free [`examples/agent-runner`](examples/agent-runner),
+then see [`examples/multi-agent`](examples/multi-agent) for the complete
+ChatModelAgent + DeepAgent + parallel coordination flow.
 The [documentation index](docs/README.md) links dedicated agent, streaming, and
 callback guides.
 

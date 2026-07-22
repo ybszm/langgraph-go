@@ -112,10 +112,17 @@ The Temporal adapter maps runs to workflows, side-effecting nodes to activities,
 resume operations to signals/updates, state inspection to queries, nested graphs
 to child workflows, and long histories to checkpoint-verified Continue-As-New.
 
+## Durability
+
+See [docs/DURABILITY.md](docs/DURABILITY.md) for how Go persistence maps to
+Python durability mode names. In short: `WithPersistence` checkpoints at
+super-step boundaries; there is no public `sync`/`async`/`exit` enum yet.
+
 ## Compatibility policy
 
 Compatibility targets observable behavior, not identical language syntax.
 Claims require executable tests against the pinned upstream reference. A feature
 is not considered conformant merely because a similarly named type exists.
+Executable scenario stubs live under the `compat` package.
 
 See [`COMPATIBILITY.md`](COMPATIBILITY.md) for current coverage and known gaps.

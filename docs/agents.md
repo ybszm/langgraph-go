@@ -4,6 +4,72 @@ The `prebuilt` package provides three layers over the typed graph runtime. They
 share `AgentState`, remain provider-neutral, and expose the compiled graph when
 streaming, interrupts, persistence, or inspection are needed.
 
+## AgentRunner: the default application entry point
+
+`AgentRunner` is the high-level facade for every built-in harness. It provides
+one `Run` API for request/response use and one `Query` event stream for chat
+applications, while hiding graph stream modes by default:
+
+```go
+agent, err := prebuilt.NewChatModelAgent(prebuilt.ChatModelAgentConfig{
+    Name:         "assistant",
+    SystemPrompt: "Answer with evidence.",
+    Model:        model,
+    Tools:        tools,
+})
+runner, err := prebuilt.NewAgentRunner(prebuilt.AgentRunnerConfig{
+    Agent: agent,
+})
+
+for event := range runner.Query(ctx, "What changed?") {
+    switch event.Kind {
+    case prebuilt.AgentEventMessage:
+        // Render a model/tool/subagent message or content-block chunk.
+    case prebuilt.AgentEventInterrupt:
+        // Collect human input, then call runner.Resume.
+    case prebuilt.AgentEventDone:
+        fmt.Println(event.State.FinalResponse())
+    case prebuilt.AgentEventError:
+        return event.Err
+    }
+}
+```
+
+Configure `AgentRunnerConfig.RunConfig.ThreadID` and compile the harness with a
+checkpointer to use `runner.Resume`. The runner copies tags, metadata,
+callbacks, stream modes, and other slices/maps at construction and invocation
+boundaries. If a consumer stops reading `Query` or `Resume` early, it must
+cancel the context so model, tool, and subagent writers can exit.
+
+The default event set contains messages, custom data, interrupts, completion,
+and errors. Request values/updates/debug modes explicitly when building the
+runner; these arrive as `AgentEventGraph`, preserving access to the graph
+runtime without making it part of the common path.
+
+## QuickAgent
+
+`NewQuickAgent` is the smallest facade when you only need a model, optional
+tools, and a system prompt. It builds on `ChatModelAgent` without introducing a
+second state type:
+
+```go
+agent, err := prebuilt.NewQuickAgent(prebuilt.QuickAgentConfig{
+    Model:        model,
+    Tools:        tools,
+    SystemPrompt: "Be concise.",
+})
+result, err := agent.Run(ctx, "What changed?", graph.RunConfig{})
+```
+
+Use tool guards when tools are untrusted or environment-sensitive:
+
+```go
+tools, err = prebuilt.GuardTools(tools, prebuilt.ToolGuardPolicy{
+    Allowed:      []string{"search", "lookup"},
+    RequireHuman: []string{"restart"},
+})
+```
+
 ## ChatModelAgent
 
 Use `NewChatModelAgent` for a single model with optional tools:
@@ -92,3 +158,7 @@ authorization errors.
 Every ChatModelAgent-based harness exposes `Stream`, `StreamState`, and
 `StreamEvents`. See [Streaming](streaming.md) for subagent event forwarding and
 [Callbacks](callbacks.md) for model/tool/delegation lifecycle hooks.
+
+Prefer `AgentRunner.Query` in applications. Use the direct graph streaming APIs
+when implementing low-level schedulers, debugging state updates, or integrating
+with a protocol that already understands graph stream modes.

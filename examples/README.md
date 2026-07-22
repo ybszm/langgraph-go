@@ -8,6 +8,8 @@ does not require credentials or external services.
 
 | Example | Concept |
 |---|---|
+| `agent-runner` | High-level Run/Query events for every built-in agent harness |
+| `quick-agent` | Smallest model + optional tools + system prompt facade |
 | `chat-model-agent` | Minimal model + tool agent with default state |
 | `deep-agent` | Structured planning and automatic general-purpose delegation |
 | `multi-agent` | Specialized workers and parallel supervisor coordination |

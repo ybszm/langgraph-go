@@ -22,13 +22,16 @@ redis/v0.1.0
    `CHANGELOG.md`.
 2. Verify that every module's `go` directive and cross-module requirement is
    intentional.
-3. Run `pwsh ./scripts/release.ps1 -Version vX.Y.Z` for a read-only release
-   audit.
-4. Run the full workspace CI, including race, PostgreSQL, Redis, and Temporal
+3. Confirm consumer-safety rules in [docs/PUBLISHING.md](docs/PUBLISHING.md)
+   (additive APIs, opt-in defaults, no secrets, PR into `main`).
+4. Run `pwsh ./scripts/release.ps1 -Version vX.Y.Z` for a read-only release
+   audit (requires a clean worktree).
+5. Run the full workspace CI, including race, PostgreSQL, Redis, and Temporal
    integration jobs.
-5. Create the coordinated tags with
+6. Merge the release PR into `main` before tagging when working on a branch.
+7. Create the coordinated tags with
    `pwsh ./scripts/release.ps1 -Version vX.Y.Z -CreateTags`.
-6. Push the tags only after reviewing them locally, then create the GitHub
+8. Push the tags only after reviewing them locally, then create the GitHub
    release from the root tag and changelog section.
 
 The script never pushes tags. If tag creation must be undone before pushing,
