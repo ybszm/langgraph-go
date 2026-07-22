@@ -34,6 +34,21 @@ type nodeOptions struct {
 	channelReads     []string
 	channelTriggers  []string
 	dynamicInterrupt bool
+	deferred         bool
+}
+
+// WithDeferred marks a node as deferred for introspection and future
+// scheduling policies. The marker is stored on the compiled graph
+// (`CompiledGraph.IsDeferred`). Full LangGraph deferred barrier scheduling is
+// still Partial — see COMPATIBILITY.md and docs/DURABILITY.md.
+func WithDeferred() NodeOption {
+	return func(options *nodeOptions) error {
+		if options.deferred {
+			return fmt.Errorf("%w: duplicate deferred declaration", ErrInvalidGraph)
+		}
+		options.deferred = true
+		return nil
+	}
 }
 
 // WithDynamicInterrupts declares that a node may call AwaitResume. The

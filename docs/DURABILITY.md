@@ -23,11 +23,20 @@ in-flight state.
 
 ## Mapping from Python durability modes
 
+`graph.RunConfig.Durability` accepts:
+
+| Value | Behavior |
+|---|---|
+| `""` / `DurabilityUnspecified` | Same as Sync when a checkpointer is configured |
+| `DurabilitySync` (`"sync"`) | Supported: commit at super-step boundaries |
+| `DurabilityAsync` (`"async"`) | Returns `ErrUnsupportedDurability` |
+| `DurabilityExit` (`"exit"`) | Returns `ErrUnsupportedDurability` |
+
 | Python concept | Closest Go behavior |
 |---|---|
-| `sync` (checkpoint after every super-step) | Default when `WithPersistence` is configured: the runtime commits at super-step boundaries before scheduling the next work set. |
-| `async` (checkpoint in the background) | Not offered. Background checkpointing would require an explicit outbox/worker design (see `backend/distributed` for multi-process equivalents). |
-| `exit` (checkpoint only on exit/interrupt) | Not offered as a mode. Interrupt paths always require durable markers; normal completion still writes the final checkpoint under persistence. |
+| `sync` | `DurabilitySync` / default with `WithPersistence` |
+| `async` | Not implemented (use `backend/distributed` for multi-worker async IO) |
+| `exit` | Not implemented as a mode |
 
 ## Practical guidance
 

@@ -8,6 +8,15 @@ intentional API changes, and patch releases preserve public API compatibility.
 
 ### Added
 
+- Docs: `COMPARISON.md`, `LANGCHAINGO.md`, `VERSIONING.md`; README QuickAgent front door.
+- `eval` golden trajectory helpers for tool-order and final-content assertions.
+- `a2a` minimal Agent-to-Agent HTTP card + message:send protocol.
+- `httpware` bearer auth, session header, and local rate-limit middleware.
+- `examples/mcp-secure` GuardTools pattern for MCP tool binding.
+- `graph.RunConfig.Durability` (sync supported; async/exit return clear errors).
+- `graph.WithDeferred` node marker + `CompiledGraph.IsDeferred`.
+- Graph micro-benchmarks (`BenchmarkLinearInvoke`, `BenchmarkFanOutThree`).
+
 ### Changed
 
 ### Fixed

@@ -55,6 +55,7 @@ type CompiledGraph[S, D any] struct {
 	nodeChannelReads        map[NodeID][]string
 	nodeChannelTriggers     map[NodeID][]string
 	dynamicInterruptNodes   map[NodeID]struct{}
+	deferredNodes           map[NodeID]struct{}
 	runLocks                *runLockSet
 }
 
@@ -222,6 +223,15 @@ func (g *CompiledGraph[S, D]) runInternal(
 			"%w: max concurrency cannot be negative",
 			ErrInvalidRunConfig,
 		)
+	}
+	switch config.Durability {
+	case DurabilityUnspecified, DurabilitySync:
+		// supported (sync is the persistent runtime default)
+	case DurabilityAsync, DurabilityExit:
+		return input, fmt.Errorf("%w: %q (only %q is implemented; see docs/DURABILITY.md)",
+			ErrUnsupportedDurability, config.Durability, DurabilitySync)
+	default:
+		return input, fmt.Errorf("%w: unknown durability %q", ErrInvalidRunConfig, config.Durability)
 	}
 	if g.persistence == nil && (config.CheckpointID != "" || config.CheckpointNamespace != "") {
 		return input, fmt.Errorf(
@@ -2029,6 +2039,17 @@ func (g *CompiledGraph[S, D]) scheduleDefaultTasks(
 		})
 	}
 	return tasks, nil
+}
+
+// IsDeferred reports whether a node was registered with WithDeferred.
+// Runtime still schedules deferred nodes with peers today; full deferred
+// barrier semantics remain Partial (COMPATIBILITY.md).
+func (g *CompiledGraph[S, D]) IsDeferred(id NodeID) bool {
+	if g == nil {
+		return false
+	}
+	_, ok := g.deferredNodes[id]
+	return ok
 }
 
 func branchToTrigger(destination NodeID) NodeID {

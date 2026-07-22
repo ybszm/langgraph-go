@@ -60,12 +60,15 @@ LangChain product and is not a source-to-source port of the Python package.
 ## Install
 
 ```bash
-go get github.com/ybszm/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@v0.1.0
 ```
 
-Go 1.25 or newer is required.
+Go 1.25 or newer is required. See [versioning](docs/VERSIONING.md) for pre-1.0
+compatibility promises.
 
-## Quick start
+## Quick start (agent)
+
+Most applications should start with **QuickAgent**, not a hand-built graph:
 
 ```go
 package main
@@ -75,58 +78,42 @@ import (
 	"fmt"
 
 	"github.com/ybszm/langgraph-go/graph"
+	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
-type State struct {
-	Count int
-}
+type echo struct{}
 
-type Delta struct {
-	Increment int
+func (echo) Invoke(_ context.Context, state prebuilt.AgentState, _ graph.Runtime) (prebuilt.AssistantMessage, error) {
+	return prebuilt.AssistantMessage{Content: "hello from quick-agent"}, nil
 }
 
 func main() {
-	builder := graph.NewStateGraph(func(
-		_ context.Context,
-		state State,
-		updates []Delta,
-	) (State, error) {
-		for _, update := range updates {
-			state.Count += update.Increment
-		}
-		return state, nil
+	agent, err := prebuilt.NewQuickAgent(prebuilt.QuickAgentConfig{
+		Model:        echo{},
+		SystemPrompt: "Be helpful.",
 	})
-
-	if err := builder.AddNode("increment", func(
-		_ context.Context,
-		_ State,
-		_ graph.Runtime,
-	) (graph.Command[Delta], error) {
-		return graph.Update(Delta{Increment: 1}), nil
-	}); err != nil {
-		panic(err)
-	}
-	if err := builder.AddEdge(graph.START, "increment"); err != nil {
-		panic(err)
-	}
-	if err := builder.AddEdge("increment", graph.END); err != nil {
-		panic(err)
-	}
-
-	compiled, err := builder.Compile()
 	if err != nil {
 		panic(err)
 	}
-
-	result, err := compiled.Invoke(context.Background(), State{}, graph.RunConfig{})
+	state, err := agent.Run(context.Background(), "hi", graph.RunConfig{})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(result.Count) // 1
+	fmt.Println(state.FinalResponse())
 }
 ```
 
-The runnable example is available at [`examples/basic`](examples/basic).
+Runnable demos:
+
+| Example | Concept |
+|---|---|
+| [`examples/quick-agent`](examples/quick-agent) | Smallest agent entry |
+| [`examples/multi-agent`](examples/multi-agent) | Supervisor + parallel sub-agents |
+| [`examples/basic`](examples/basic) | Typed StateGraph without LLM |
+
+Multi-agent, handoff, and deep-agent patterns: [docs/agents.md](docs/agents.md).
+Interop with langchaingo: [docs/LANGCHAINGO.md](docs/LANGCHAINGO.md).
+How we compare to other Go stacks: [docs/COMPARISON.md](docs/COMPARISON.md).
 
 ## Packages
 

@@ -10,6 +10,7 @@ does not require credentials or external services.
 |---|---|
 | `agent-runner` | High-level Run/Query events for every built-in agent harness |
 | `quick-agent` | Smallest model + optional tools + system prompt facade |
+| `mcp-secure` | MCP-style tools + allowlist guard pattern (offline) |
 | `chat-model-agent` | Minimal model + tool agent with default state |
 | `deep-agent` | Structured planning and automatic general-purpose delegation |
 | `multi-agent` | Specialized workers and parallel supervisor coordination |
