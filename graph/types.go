@@ -274,6 +274,21 @@ func UpdateAndGoto[D any](delta D, destinations ...NodeID) Command[D] {
 	}
 }
 
+// Durability selects checkpoint aggressiveness for a run. Empty defaults to
+// Sync when a checkpointer is configured. See docs/DURABILITY.md.
+type Durability string
+
+const (
+	// DurabilityUnspecified uses Sync when persistence is configured.
+	DurabilityUnspecified Durability = ""
+	// DurabilitySync commits checkpoints at super-step boundaries (supported).
+	DurabilitySync Durability = "sync"
+	// DurabilityAsync is reserved; requesting it returns ErrUnsupportedDurability.
+	DurabilityAsync Durability = "async"
+	// DurabilityExit is reserved; requesting it returns ErrUnsupportedDurability.
+	DurabilityExit Durability = "exit"
+)
+
 // RunConfig controls a single graph execution.
 type RunConfig struct {
 	// Context contains immutable dependencies scoped to this invocation. It is
@@ -294,6 +309,8 @@ type RunConfig struct {
 	// MaxConcurrency limits simultaneously executing nodes. Zero means the
 	// number of tasks in the current super-step. A negative value is invalid.
 	MaxConcurrency int
+	// Durability controls checkpoint timing. Only Sync is implemented today.
+	Durability Durability
 	// ThreadID selects the durable execution thread when the graph was
 	// compiled with a checkpointer.
 	ThreadID string

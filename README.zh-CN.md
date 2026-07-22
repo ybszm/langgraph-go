@@ -54,73 +54,33 @@ LangGraph Go 是由社区独立维护的 Go 实现，借鉴了
 ## 安装
 
 ```bash
-go get github.com/ybszm/langgraph-go@latest
+go get github.com/ybszm/langgraph-go@v0.1.0
 ```
 
-需要 Go 1.25 或更高版本。
+需要 Go 1.25 或更高版本。版本承诺见 [docs/VERSIONING.md](docs/VERSIONING.md)。
 
-## 快速开始
+## 快速开始（Agent）
+
+多数应用应从 **QuickAgent** 入手：
 
 ```go
-package main
-
-import (
-	"context"
-	"fmt"
-
-	"github.com/ybszm/langgraph-go/graph"
-)
-
-type State struct {
-	Count int
-}
-
-type Delta struct {
-	Increment int
-}
-
-func main() {
-	builder := graph.NewStateGraph(func(
-		_ context.Context,
-		state State,
-		updates []Delta,
-	) (State, error) {
-		for _, update := range updates {
-			state.Count += update.Increment
-		}
-		return state, nil
-	})
-
-	if err := builder.AddNode("increment", func(
-		_ context.Context,
-		_ State,
-		_ graph.Runtime,
-	) (graph.Command[Delta], error) {
-		return graph.Update(Delta{Increment: 1}), nil
-	}); err != nil {
-		panic(err)
-	}
-	if err := builder.AddEdge(graph.START, "increment"); err != nil {
-		panic(err)
-	}
-	if err := builder.AddEdge("increment", graph.END); err != nil {
-		panic(err)
-	}
-
-	compiled, err := builder.Compile()
-	if err != nil {
-		panic(err)
-	}
-
-	result, err := compiled.Invoke(context.Background(), State{}, graph.RunConfig{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(result.Count) // 1
-}
+agent, err := prebuilt.NewQuickAgent(prebuilt.QuickAgentConfig{
+	Model:        model, // 实现 prebuilt.ChatModel[prebuilt.AgentState]
+	SystemPrompt: "简洁回答。",
+})
+state, err := agent.Run(ctx, "你好", graph.RunConfig{})
+fmt.Println(state.FinalResponse())
 ```
 
-可运行示例位于 [`examples/basic`](examples/basic)。
+| 示例 | 说明 |
+|---|---|
+| [`examples/quick-agent`](examples/quick-agent) | 最小 Agent 入口 |
+| [`examples/multi-agent`](examples/multi-agent) | 监督者 + 并行子 Agent |
+| [`examples/basic`](examples/basic) | 无 LLM 的类型化 StateGraph |
+
+多 Agent 见 [docs/agents.md](docs/agents.md)；与 langchaingo 协作见
+[docs/LANGCHAINGO.md](docs/LANGCHAINGO.md)；对比见
+[docs/COMPARISON.md](docs/COMPARISON.md)。
 
 ## 包结构
 

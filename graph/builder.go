@@ -61,6 +61,7 @@ type StateGraph[S, D any] struct {
 	nodeChannelReads        map[NodeID][]string
 	nodeChannelTriggers     map[NodeID][]string
 	dynamicInterruptNodes   map[NodeID]struct{}
+	deferredNodes           map[NodeID]struct{}
 }
 
 // NewStateGraph creates an empty graph using reducer for super-step updates.
@@ -82,6 +83,7 @@ func NewStateGraph[S, D any](reducer Reducer[S, D]) *StateGraph[S, D] {
 		nodeChannelReads:        make(map[NodeID][]string),
 		nodeChannelTriggers:     make(map[NodeID][]string),
 		dynamicInterruptNodes:   make(map[NodeID]struct{}),
+		deferredNodes:           make(map[NodeID]struct{}),
 	}
 }
 
@@ -192,6 +194,12 @@ func (g *StateGraph[S, D]) AddNode(id NodeID, node Node[S, D], options ...NodeOp
 	}
 	if configured.dynamicInterrupt {
 		g.dynamicInterruptNodes[id] = struct{}{}
+	}
+	if configured.deferred {
+		if g.deferredNodes == nil {
+			g.deferredNodes = make(map[NodeID]struct{})
+		}
+		g.deferredNodes[id] = struct{}{}
 	}
 	if configured.errorHandler != nil {
 		handler, ok := configured.errorHandler.(ErrorHandler[S, D])
@@ -630,6 +638,7 @@ func (g *StateGraph[S, D]) Compile(
 		nodeChannelReads:        cloneNodeChannelReads(g.nodeChannelReads),
 		nodeChannelTriggers:     cloneNodeChannelReads(g.nodeChannelTriggers),
 		dynamicInterruptNodes:   cloneNodeSet(g.dynamicInterruptNodes),
+		deferredNodes:           cloneNodeSet(g.deferredNodes),
 		runLocks:                newRunLockSet(),
 	}, nil
 }
