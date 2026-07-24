@@ -1,9 +1,9 @@
 # Durability semantics
 
 LangGraph Python exposes run-level durability modes such as `sync`, `async`, and
-`exit`. LangGraph Go does not currently mirror those names as a public
-`RunConfig` enum. This document maps the Go behavior so operators can reason
-about crash safety without assuming a drop-in Python API.
+`exit`. LangGraph Go mirrors those names through `RunConfig.Durability` and
+implements all three. This document maps the Go behavior without implying a
+drop-in Python API.
 
 ## What is durable today
 
@@ -29,14 +29,14 @@ in-flight state.
 |---|---|
 | `""` / `DurabilityUnspecified` | Same as Sync when a checkpointer is configured |
 | `DurabilitySync` (`"sync"`) | Supported: commit at super-step boundaries |
-| `DurabilityAsync` (`"async"`) | Returns `ErrUnsupportedDurability` |
-| `DurabilityExit` (`"exit"`) | Returns `ErrUnsupportedDurability` |
+| `DurabilityAsync` (`"async"`) | Supported: ordered checkpoint IO overlaps subsequent node execution and flushes before return |
+| `DurabilityExit` (`"exit"`) | Supported: publish only the final checkpoint per active namespace; interrupts and failed super-steps flush recovery boundaries |
 
 | Python concept | Closest Go behavior |
 |---|---|
 | `sync` | `DurabilitySync` / default with `WithPersistence` |
-| `async` | Not implemented (use `backend/distributed` for multi-worker async IO) |
-| `exit` | Not implemented as a mode |
+| `async` | `DurabilityAsync`; one run-scoped writer preserves Put/PutWrites order |
+| `exit` | `DurabilityExit`; intermediate checkpoints stay run-local |
 
 ## Practical guidance
 
@@ -48,8 +48,20 @@ in-flight state.
 - Long-running threads: apply checkpoint retention
   (`checkpoint/retention`) so history does not grow without bound.
 
-## Roadmap note
+## Implementation notes
 
-A future `graph.Durability` field on `RunConfig` may expose explicit modes. Until
-then, treat “persistence enabled” as the durable path and document application
-expectations in deploy guides rather than assuming Python mode names.
+`RunConfig.Durability` exposes the upstream names. Unknown modes fail before the
+saver is read or written. Exit uses a run-scoped buffering saver and publishes
+only the latest boundary in each active namespace, flushing nested namespaces
+before their parent. Async uses a run-scoped single-writer queue:
+
+1. Checkpoint drafts remain readable in memory while the writer catches up.
+2. Checkpoint and pending-write commands are serialized in their original order.
+3. Node execution may overlap the prior commit; run return and lock release wait
+   for a complete flush.
+4. A background persistence error cancels execution and is returned to the caller.
+5. Parent IDs, channel versions, task IDs, and pending-write ordering remain stable.
+6. Draft reads and history queries are isolated by thread and checkpoint namespace.
+
+Async improves latency hiding, not crash guarantees: Sync remains the strongest
+choice when every super-step must be confirmed durable before the next begins.

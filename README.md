@@ -15,47 +15,39 @@
 
 </div>
 
-LangGraph Go is an independent, community-maintained Go implementation of the
-core graph execution ideas popularized by
-[`langchain-ai/langgraph`](https://github.com/langchain-ai/langgraph). It is
-designed around Go generics, explicit interfaces, deterministic concurrent
-execution, and durable state.
+LangGraph Go is a low-level runtime for long-running, stateful workflows and
+agents. You define typed state transitions; the runtime schedules them as a
+graph, reduces concurrent updates deterministically, and can persist execution
+at super-step boundaries.
 
-The behavioral reference for compatibility work is LangGraph `1.2.9` at commit
-`95af6a00718588e7b7ce17310e8006d267896a77`. This project is not an official
-LangChain product and is not a source-to-source port of the Python package.
+The design is inspired by
+[`langchain-ai/langgraph`](https://github.com/langchain-ai/langgraph), Pregel,
+and durable workflow systems, but the API is intentionally Go-native: generics,
+explicit interfaces, `context.Context`, and errors.
 
-> [!IMPORTANT]
-> The project is under active development. Core workflows are usable and
-> extensively tested, but the complete Python API is not yet reproduced. See
-> [Compatibility](COMPATIBILITY.md) and [Durability](docs/DURABILITY.md) before
-> adopting it as a drop-in replacement.
+> [!WARNING]
+> **v0.1.0 is experimental.** The core is being stabilized for production use,
+> but public APIs and checkpoint schemas may still change before v1.0. Pin the
+> module version and read [Versioning](docs/VERSIONING.md),
+> [Compatibility](COMPATIBILITY.md), and [Durability](docs/DURABILITY.md).
 
-## Repository layout notes
+## Why use it?
 
-- **Core Go runtime**: packages at the repo root (`graph`, `checkpoint`,
-  `prebuilt`, …) and optional modules listed in `go.work`.
-- **`python学习文档/`**: a **standalone teaching project** (Python MiniGraph + a
-  small Go runtime rewrite). It is not imported by the published modules and is
-  not a substitute for the main library API. Start with the root README examples
-  or `examples/` for production-oriented usage.
+Use LangGraph Go when an operation is not just one request/response:
 
-## Highlights
+- **Durable execution**: checkpoint state and resume after interruption or
+  failure.
+- **Human-in-the-loop**: pause a task, inspect state, and continue with an
+  explicit answer.
+- **Deterministic concurrency**: run independent nodes together, then reduce
+  their typed updates in a stable order.
+- **Time travel**: inspect history, replay from a checkpoint, or fork an older
+  state without mutating it.
+- **Streaming and observability**: observe values, updates, messages, custom
+  events, interrupts, and node lifecycle callbacks.
 
-- Generic `StateGraph[S, D]` API with typed state and updates
-- BSP-style super-steps with deterministic reduction
-- Static, conditional, waiting, and dynamic `Send` edges
-- `Command` updates, routing, parent targeting, and durable resume
-- Concurrent nodes with limits, retries, caching, timeouts, and cancellation
-- Checkpointing with memory, SQLite, PostgreSQL, and optional Redis implementations
-- Interrupt/resume, replay, branching, time travel, and nested subgraphs
-- Values, updates, messages, custom, debug, and subgraph streaming, including native provider chunks
-- Typed Functional API with tasks, futures, persistence, and recovery
-- Provider-neutral ToolNode and ReAct-style agent building blocks
-- Ten optional model adapters, MCP tools, and agent-as-tool composition
-- OpenTelemetry callbacks and a dependency-free local trace viewer
-- Long-term stores, TTL, semantic indexing, vector backends, BM25/hybrid retrieval, and context memory middleware
-- Optional HTTP/SSE, Redis, distributed PostgreSQL, and Temporal integrations
+If you only need a short stateless tool loop, a graph runtime is probably more
+complex than necessary.
 
 ## Install
 
@@ -66,9 +58,26 @@ go get github.com/ybszm/langgraph-go@v0.1.0
 Go 1.25 or newer is required. See [versioning](docs/VERSIONING.md) for pre-1.0
 compatibility promises.
 
-## Quick start (agent)
+## Core mental model
 
-Most applications should start with **QuickAgent**, not a hand-built graph:
+| Concept | Meaning |
+|---|---|
+| `State` (`S`) | The complete typed snapshot visible to nodes |
+| `Delta` (`D`) | A typed update returned by a node |
+| Reducer | The only function allowed to merge deltas into state |
+| Node | A unit of work: `State -> Command[Delta]` |
+| Edge | Declares which node may run next |
+| Super-step | One deterministic scheduling boundary; ready nodes may run concurrently |
+| Thread | One durable execution history, selected by `RunConfig.ThreadID` |
+| Checkpoint | A persisted state and task snapshot at a super-step boundary |
+
+Nodes do not mutate shared state. They return deltas, and the reducer applies
+those deltas after the super-step. This separation is the basis for replay,
+parallel execution, and recovery.
+
+## Tutorial 1: build a typed graph
+
+The smallest useful graph increments a counter:
 
 ```go
 package main
@@ -76,124 +85,182 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/ybszm/langgraph-go/graph"
-	"github.com/ybszm/langgraph-go/prebuilt"
 )
 
-type echo struct{}
+type State struct {
+	Count int
+}
 
-func (echo) Invoke(_ context.Context, state prebuilt.AgentState, _ graph.Runtime) (prebuilt.AssistantMessage, error) {
-	return prebuilt.AssistantMessage{Content: "hello from quick-agent"}, nil
+type Delta struct {
+	Add int
 }
 
 func main() {
-	agent, err := prebuilt.NewQuickAgent(prebuilt.QuickAgentConfig{
-		Model:        echo{},
-		SystemPrompt: "Be helpful.",
+	builder := graph.NewStateGraph(func(
+		_ context.Context,
+		state State,
+		updates []Delta,
+	) (State, error) {
+		for _, update := range updates {
+			state.Count += update.Add
+		}
+		return state, nil
+	})
+
+	err := builder.AddNode("increment", func(
+		_ context.Context,
+		_ State,
+		_ graph.Runtime,
+	) (graph.Command[Delta], error) {
+		return graph.Update(Delta{Add: 1}), nil
 	})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	state, err := agent.Run(context.Background(), "hi", graph.RunConfig{})
+	if err := builder.AddEdge(graph.START, "increment"); err != nil {
+		log.Fatal(err)
+	}
+	if err := builder.AddEdge("increment", graph.END); err != nil {
+		log.Fatal(err)
+	}
+
+	compiled, err := builder.Compile()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	fmt.Println(state.FinalResponse())
+	result, err := compiled.Invoke(
+		context.Background(),
+		State{},
+		graph.RunConfig{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(result.Count) // 1
 }
 ```
 
-Runnable demos:
+Execution is:
 
-| Example | Concept |
+```text
+START -> increment -> END
+            |
+            +-- returns Delta{Add: 1}
+                       |
+Reducer(State{}, [Delta{Add: 1}]) -> State{Count: 1}
+```
+
+Run the complete example:
+
+```bash
+go run ./examples/basic
+```
+
+## Tutorial 2: make execution durable
+
+A graph becomes durable when it is compiled with a `checkpoint.Saver` and
+invoked with a stable thread ID:
+
+```go
+import (
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+)
+
+compiled, err := builder.Compile(graph.WithPersistence(
+	graph.PersistenceConfig[State, Delta]{
+		Saver:      checkpointmemory.NewSaver(),
+		StateCodec: checkpoint.MustJSONCodec[State]("example.state", 1),
+		DeltaCodec: checkpoint.MustJSONCodec[Delta]("example.delta", 1),
+	},
+))
+
+config := graph.RunConfig{
+	ThreadID:  "counter-demo",
+	Durability: graph.DurabilitySync,
+}
+result, err := compiled.Invoke(context.Background(), State{}, config)
+```
+
+The codec name and version are part of your persisted data contract. Do not
+silently reuse a codec name for an incompatible Go type. The memory saver is
+for tests and examples; use SQLite for local durable workflows and evaluate
+PostgreSQL or Redis for deployed systems.
+
+See [`examples/checkpoint-resume`](examples/checkpoint-resume) for history
+inspection and [`examples/interrupt-resume`](examples/interrupt-resume) for a
+complete pause/resume cycle.
+
+## How recovery works
+
+For every durable thread:
+
+1. The runtime loads the latest checkpoint.
+2. Ready nodes execute for one super-step.
+3. Successful task writes are recorded before the full step commits.
+4. The reducer creates the next state.
+5. The saver commits the next checkpoint and scheduled tasks.
+
+If one parallel node fails after a peer succeeds, the successful pending write
+can be reused during recovery instead of running that peer again. Side effects
+inside a node still require application-level idempotency.
+
+Durability modes trade latency for crash exposure:
+
+| Mode | Behavior |
 |---|---|
-| [`examples/quick-agent`](examples/quick-agent) | Smallest agent entry |
-| [`examples/multi-agent`](examples/multi-agent) | Supervisor + parallel sub-agents |
-| [`examples/basic`](examples/basic) | Typed StateGraph without LLM |
+| `sync` | Confirm each checkpoint before the next super-step |
+| `async` | Preserve write order while overlapping checkpoint I/O with execution |
+| `exit` | Keep intermediate checkpoints in memory and publish final/recovery boundaries |
 
-Multi-agent, handoff, and deep-agent patterns: [docs/agents.md](docs/agents.md).
-Interop with langchaingo: [docs/LANGCHAINGO.md](docs/LANGCHAINGO.md).
-How we compare to other Go stacks: [docs/COMPARISON.md](docs/COMPARISON.md).
+Start with `sync` until measurements justify another mode.
 
-## Packages
+## Learning path
 
-| Package | Purpose |
-|---|---|
-| `graph` | Typed graph builder, compiler, runtime, streaming, interrupts, and state inspection |
-| `channel` | Pregel-style typed channel primitives |
-| `checkpoint/*` | Memory, SQLite, and PostgreSQL checkpoint savers and codecs |
-| `functional` | Durable tasks, futures, and typed entrypoints |
-| `prebuilt` | Messages, ToolNode, `ChatModelAgent`, `DeepAgent`, multi-agent coordination, and ReAct components |
-| `retrieval` | Text splitting, BM25/vector/hybrid retrieval, ingestion, and retriever-as-tool |
-| `memory` | Sliding-window, summarization, and retrieval-context model middleware |
-| `store/*` | Long-term key/value, TTL, embedding, and vector stores |
-| `redis/*` | Optional Redis checkpoint, long-term store, and task cache module |
-| `providers/*` | Ten optional model-provider adapters (separate module) |
-| `mcpclient` | Official-SDK MCP tool client (separate module) |
-| `remote` | Typed HTTP/SSE server, client, and local trace UI (separate module) |
-| `observability/otel` | OpenTelemetry graph callbacks (separate module) |
-| `backend/distributed` | Leased queues, event logs, interrupts, and transactional outboxes |
-| `backend/temporal` | Temporal adapter and official SDK binding (separate module) |
+| Step | Read or run | What to learn |
+|---|---|---|
+| 1 | [`examples/basic`](examples/basic) | State, Delta, reducer, node, edge |
+| 2 | [`examples/conditional-routing`](examples/conditional-routing) and [`examples/fanout`](examples/fanout) | Routing and deterministic parallel reduction |
+| 3 | [`examples/checkpoint-resume`](examples/checkpoint-resume) | Threads, codecs, checkpoints, history |
+| 4 | [`examples/interrupt-resume`](examples/interrupt-resume) | Human-in-the-loop and durable resume |
+| 5 | [`examples/time-travel`](examples/time-travel) | Replay and immutable forks |
+| 6 | [`examples/streaming`](examples/streaming) | Values, updates, and terminal events |
+| 7 | [`examples/subgraph`](examples/subgraph) | Typed composition and nested persistence |
+| 8 | [Architecture](ARCHITECTURE.md), [Durability](docs/DURABILITY.md), and [Versioning](docs/VERSIONING.md) | Production and compatibility boundaries |
 
-## Retrieval and context memory
+## Core and optional modules
 
-The lightweight `retrieval` package can be used as a ReAct tool or as model
-middleware. `memory.NewWindow` and `memory.NewSummary` project bounded context
-without deleting durable graph history; `memory.NewRetrieval` injects ranked
-documents only for the current model call. BM25 works without credentials, and
-vector retrieval composes with the existing `store.Embedder` and
-`store.VectorIndex` contracts.
+The project deliberately keeps model and infrastructure integrations outside
+the core module.
 
-See the credential-free [`examples/retrieval-memory`](examples/retrieval-memory)
-program for an end-to-end composition.
+| Scope | Packages | Status |
+|---|---|---|
+| Core runtime | `graph`, `channel`, `checkpoint/*` | **Stabilizing** |
+| Core support | `functional`, `cache`, `store/*` | **Experimental** |
+| Agent conveniences | `prebuilt`, `memory`, `retrieval` | **Experimental** |
+| Integrations | `providers`, `mcpclient`, `remote`, `redis`, `observability/otel`, `backend/temporal` | **Optional / Experimental** |
 
-## Agent harnesses
+Start with the core runtime. Add an integration only when the application needs
+it. Agent-oriented examples and guides remain available through
+[docs/agents.md](docs/agents.md) and [examples/README.md](examples/README.md).
 
-`prebuilt.NewChatModelAgent` is the shortest path from a provider-neutral chat
-model to a runnable agent: it supplies checkpoint-safe message state, prompt
-injection, ReAct tool execution, and a text-oriented `Run` method.
+## Before production
 
-`prebuilt.NewAgentRunner` is the application-facing execution facade shared by
-ChatModelAgent, DeepAgent, Router, Supervisor, and Handoff harnesses. Its
-`Query` method emits high-level message, custom, interrupt, done, and error
-events without requiring applications to understand graph stream modes;
-`Resume` continues durable human-in-the-loop sessions through the same event
-contract.
+- Pin an exact module version.
+- Use explicit, versioned codecs for every persisted type.
+- Keep state small; store large documents or artifacts outside checkpoints.
+- Make node side effects idempotent.
+- Set node timeouts, retry predicates, and concurrency limits deliberately.
+- Test recovery against the same saver used in deployment.
+- Plan checkpoint retention, database backup, and schema migration.
+- Propagate `run_id`, `thread_id`, and checkpoint coordinates into logs/traces.
 
-For complex work, `prebuilt.NewDeepAgent` adds a `write_todos` planning tool and
-a `task` delegation tool. It creates a general-purpose isolated worker by
-default, accepts specialized `SubAgent` values, and executes multiple task calls
-concurrently through ToolNode. `NewMultiAgentCoordinator` exposes the same
-supervisor pattern without the planning harness. In both cases the supervisor
-receives only each worker's final response, keeping intermediate context out of
-the main conversation.
-
-`NewRouterAgent` provides a selective one-pass fan-out/synthesis pattern, while
-`NewHandoffAgent` persists the active persona as models transfer direct control.
-`FallbackChatModel` composes ordered model/provider failover. Agent-level
-streaming forwards subagent chunks with worker metadata, and agent callbacks
-cover model, individual tool, and delegation boundaries.
-
-Start with the credential-free [`examples/agent-runner`](examples/agent-runner),
-then see [`examples/multi-agent`](examples/multi-agent) for the complete
-ChatModelAgent + DeepAgent + parallel coordination flow.
-The [documentation index](docs/README.md) links dedicated agent, streaming, and
-callback guides.
-
-## Compatibility boundaries
-
-LangGraph Go aims for behavioral compatibility where the concepts translate
-cleanly to Go. It intentionally uses Go APIs rather than mirroring Python syntax.
-Known gaps include:
-
-- low-level Python `Pregel` / `NodeBuilder` construction
-- `defer=True` nodes and per-run `sync` / `async` / `exit` durability modes
-- the Python v3 stream-transformer and graph-UI helper APIs
-- several convenience and legacy Prebuilt exports
-- full hosted LangGraph Platform and Python SDK protocol coverage
-
-The detailed, evidence-based status is maintained in
-[`COMPATIBILITY.md`](COMPATIBILITY.md).
+The project does not yet claim a stable v1 API or universal production
+readiness. See the [documentation index](docs/README.md) and open an issue for
+any recovery or compatibility behavior that cannot be reproduced from tests.
 
 ## Development
 
@@ -203,8 +270,9 @@ go vet ./...
 ```
 
 This repository is a Go workspace. Run the same commands from `providers`,
-`mcpclient`, `remote`, `observability/otel`, and `backend/temporal` when changing
-an optional module. Go 1.25 or newer is required across the workspace.
+`mcpclient`, `remote`, `redis`, `observability/otel`, and `backend/temporal`
+when changing an optional module. Go 1.25 or newer is required across the
+workspace.
 
 Database integration tests are enabled with `LANGGRAPH_POSTGRES_DSN`. Temporal
 integration is enabled with `LANGGRAPH_TEMPORAL_ADDRESS`. The CI workflow runs
@@ -213,7 +281,7 @@ unit, race, PostgreSQL, Redis, and Temporal checks on Linux.
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the contribution workflow and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for design details.
 
-Eighteen credential-free, executable workflows are indexed in
+Credential-free executable workflows are indexed in
 [`examples/README.md`](examples/README.md). Release coordination and the
 pre-1.0 compatibility policy are documented in [`RELEASING.md`](RELEASING.md).
 

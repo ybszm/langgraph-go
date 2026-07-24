@@ -53,3 +53,54 @@ func TestResolveTasksRejectsParentCommandAtRootAdapter(t *testing.T) {
 		t.Fatal("expected parent command error")
 	}
 }
+
+func TestResolveTasksCarriesDeferredStateUntilOrdinaryWorkDrains(t *testing.T) {
+	builder := graph.NewStateGraph[testState, testDelta](testReducer)
+	for _, node := range []graph.NodeID{"early", "tail"} {
+		if err := builder.AddNode(node, func(context.Context, testState, graph.Runtime) (graph.Command[testDelta], error) {
+			return graph.NoCommand[testDelta](), nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := builder.AddNode("final", func(context.Context, testState, graph.Runtime) (graph.Command[testDelta], error) {
+		return graph.NoCommand[testDelta](), nil
+	}, graph.WithDeferred()); err != nil {
+		t.Fatal(err)
+	}
+	for _, edge := range [][2]graph.NodeID{
+		{graph.START, "early"},
+		{"early", "final"},
+		{"early", "tail"},
+		{"tail", graph.END},
+		{"final", graph.END},
+	} {
+		if err := builder.AddEdge(edge[0], edge[1]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	compiled, err := builder.Compile()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	first, err := compiled.ResolveTasks(context.Background(), 0, testState{}, []graph.CompletedTask[testDelta]{
+		{Node: "early", TaskID: "task-early", Command: graph.NoCommand[testDelta]()},
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first.Tasks) != 1 || first.Tasks[0].Node != "tail" ||
+		len(first.Waiting["__deferred__:final"]) != 1 {
+		t.Fatalf("first plan=%+v", first)
+	}
+	second, err := compiled.ResolveTasks(context.Background(), 1, testState{}, []graph.CompletedTask[testDelta]{
+		{Node: "tail", TaskID: first.Tasks[0].ID, Command: graph.NoCommand[testDelta]()},
+	}, first.Waiting)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(second.Tasks) != 1 || second.Tasks[0].Node != "final" || len(second.Waiting) != 0 {
+		t.Fatalf("second plan=%+v", second)
+	}
+}

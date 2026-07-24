@@ -15,41 +15,30 @@
 
 </div>
 
-LangGraph Go 是由社区独立维护的 Go 实现，借鉴了
-[`langchain-ai/langgraph`](https://github.com/langchain-ai/langgraph) 所推广的核心图执行理念。
-项目围绕 Go 泛型、显式接口、确定性并发执行和持久化状态设计。
+LangGraph Go 是一个面向长时间运行、有状态工作流与 Agent 的底层运行时。开发者负责定义
+强类型状态转换；运行时负责编排图、确定性归并并发更新，并在 super-step 边界持久化执行状态。
 
-兼容性工作的行为基准是 LangGraph `1.2.9`，对应提交
-`95af6a00718588e7b7ce17310e8006d267896a77`。本项目不是 LangChain 官方产品，
-也不是 Python 包的逐行或源码级移植。
+项目借鉴了
+[`langchain-ai/langgraph`](https://github.com/langchain-ai/langgraph)、Pregel
+以及持久化工作流系统，但 API 坚持 Go 风格：泛型、显式接口、`context.Context` 和错误返回。
 
-> [!IMPORTANT]
-> 项目仍在积极开发中。核心工作流已经可用并经过大量测试，但尚未完整复现全部
-> Python API。在将其视为直接替代品之前，请先阅读[兼容性说明](COMPATIBILITY.md)
-> 与[持久化语义](docs/DURABILITY.md)。
+> [!WARNING]
+> **v0.1.0 仍处于实验阶段。** 核心运行时正在向生产稳定性收敛，但 v1.0 前公开 API
+> 与 checkpoint schema 仍可能调整。请固定依赖版本，并阅读
+> [版本策略](docs/VERSIONING.md)、[兼容性说明](COMPATIBILITY.md)和
+> [持久化语义](docs/DURABILITY.md)。
 
-## 仓库目录说明
+## 为什么使用它？
 
-- **核心 Go 运行时**：仓库根目录包（`graph`、`checkpoint`、`prebuilt` 等）以及
-  `go.work` 中的可选 module。
-- **`python学习文档/`**：**独立教学项目**（Python MiniGraph + 小规模 Go 对照实现），
-  不被已发布 module 引用，也**不能**当作主库 API 文档。生产向用法请从根 README
-  与 `examples/` 入手。
+当一次操作不再只是简单的请求—响应时，可以考虑 LangGraph Go：
 
-## 主要能力
+- **持久化执行**：保存状态，并在中断或故障后继续运行。
+- **人机协作**：暂停任务、检查状态，再用明确的人类输入继续。
+- **确定性并发**：并行运行互不依赖的节点，再以稳定顺序归并强类型更新。
+- **时间旅行**：检查历史、从 checkpoint 重放，或从旧状态创建不可变分支。
+- **流式与可观测**：观察状态、更新、消息、自定义事件、中断和节点生命周期。
 
-- 基于泛型的 `StateGraph[S, D]`，提供强类型状态与更新
-- BSP 风格 super-step 与确定性归并
-- 静态边、条件边、等待边和动态 `Send` 边
-- `Command` 更新、动态路由、父图定向与持久化恢复
-- 带并发限制、重试、缓存、超时和取消的节点执行
-- 内存、SQLite、PostgreSQL 和可选 Redis checkpoint 实现
-- 中断与恢复、重放、分支、时间旅行和嵌套子图
-- Values、Updates、Messages、Custom、Debug 和子图流式输出，包括模型原生 SSE 分片
-- 带任务、Future、持久化和恢复能力的强类型 Functional API
-- 与模型供应商无关的 ToolNode 和 ReAct 风格 Agent 组件
-- 长期 Store、TTL、语义索引、向量后端、BM25/混合检索与上下文记忆中间件
-- 可选 HTTP/SSE、Redis、分布式 PostgreSQL 与 Temporal 集成
+如果需求只是一个短小、无状态的工具调用循环，引入图运行时通常会增加不必要的复杂度。
 
 ## 安装
 
@@ -59,83 +48,201 @@ go get github.com/ybszm/langgraph-go@v0.1.0
 
 需要 Go 1.25 或更高版本。版本承诺见 [docs/VERSIONING.md](docs/VERSIONING.md)。
 
-## 快速开始（Agent）
+## 核心心智模型
 
-多数应用应从 **QuickAgent** 入手：
+| 概念 | 含义 |
+|---|---|
+| `State`（`S`） | 节点可见的完整强类型状态快照 |
+| `Delta`（`D`） | 节点返回的强类型更新 |
+| Reducer | 唯一允许把多个 Delta 归并进 State 的函数 |
+| Node | 一个工作单元：`State -> Command[Delta]` |
+| Edge | 声明接下来允许运行哪些节点 |
+| Super-step | 一个确定性调度边界；就绪节点可以并发运行 |
+| Thread | 由 `RunConfig.ThreadID` 选择的一条持久化执行历史 |
+| Checkpoint | 在 super-step 边界保存的状态与任务快照 |
+
+节点不直接修改共享状态，而是返回 Delta；Reducer 在 super-step 结束后统一归并。
+正是这一层分离，使并发执行、重放与故障恢复具有清晰语义。
+
+## 教程一：构建强类型图
+
+最小可用图只做一件事：把计数器加一。
 
 ```go
-agent, err := prebuilt.NewQuickAgent(prebuilt.QuickAgentConfig{
-	Model:        model, // 实现 prebuilt.ChatModel[prebuilt.AgentState]
-	SystemPrompt: "简洁回答。",
-})
-state, err := agent.Run(ctx, "你好", graph.RunConfig{})
-fmt.Println(state.FinalResponse())
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/ybszm/langgraph-go/graph"
+)
+
+type State struct {
+	Count int
+}
+
+type Delta struct {
+	Add int
+}
+
+func main() {
+	builder := graph.NewStateGraph(func(
+		_ context.Context,
+		state State,
+		updates []Delta,
+	) (State, error) {
+		for _, update := range updates {
+			state.Count += update.Add
+		}
+		return state, nil
+	})
+
+	err := builder.AddNode("increment", func(
+		_ context.Context,
+		_ State,
+		_ graph.Runtime,
+	) (graph.Command[Delta], error) {
+		return graph.Update(Delta{Add: 1}), nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := builder.AddEdge(graph.START, "increment"); err != nil {
+		log.Fatal(err)
+	}
+	if err := builder.AddEdge("increment", graph.END); err != nil {
+		log.Fatal(err)
+	}
+
+	compiled, err := builder.Compile()
+	if err != nil {
+		log.Fatal(err)
+	}
+	result, err := compiled.Invoke(
+		context.Background(),
+		State{},
+		graph.RunConfig{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(result.Count) // 1
+}
 ```
 
-| 示例 | 说明 |
+执行过程可以理解为：
+
+```text
+START -> increment -> END
+            |
+            +-- 返回 Delta{Add: 1}
+                       |
+Reducer(State{}, [Delta{Add: 1}]) -> State{Count: 1}
+```
+
+运行仓库中的完整示例：
+
+```bash
+go run ./examples/basic
+```
+
+## 教程二：让执行可恢复
+
+编译时配置 `checkpoint.Saver`，运行时提供稳定的 Thread ID，图就会进入持久化执行路径：
+
+```go
+import (
+	"github.com/ybszm/langgraph-go/checkpoint"
+	checkpointmemory "github.com/ybszm/langgraph-go/checkpoint/memory"
+)
+
+compiled, err := builder.Compile(graph.WithPersistence(
+	graph.PersistenceConfig[State, Delta]{
+		Saver:      checkpointmemory.NewSaver(),
+		StateCodec: checkpoint.MustJSONCodec[State]("example.state", 1),
+		DeltaCodec: checkpoint.MustJSONCodec[Delta]("example.delta", 1),
+	},
+))
+
+config := graph.RunConfig{
+	ThreadID:  "counter-demo",
+	Durability: graph.DurabilitySync,
+}
+result, err := compiled.Invoke(context.Background(), State{}, config)
+```
+
+Codec 名称与版本属于持久化数据协议。不要在 Go 类型不兼容时悄悄复用原有 Codec 名称。
+Memory Saver 只适合测试和示例；本地持久化可使用 SQLite，部署场景应根据运维条件评估
+PostgreSQL 或 Redis。
+
+继续运行 [`examples/checkpoint-resume`](examples/checkpoint-resume) 学习历史检查，
+再运行 [`examples/interrupt-resume`](examples/interrupt-resume) 完成人机暂停与恢复。
+
+## 恢复为什么可靠
+
+对每个持久化 Thread，运行时会：
+
+1. 读取最新 Checkpoint。
+2. 执行当前 super-step 中的就绪节点。
+3. 在完整 super-step 提交前记录成功任务的 pending writes。
+4. 通过 Reducer 生成下一状态。
+5. 提交新的 Checkpoint 与后续任务。
+
+如果一个并行节点失败、另一个节点已经成功，恢复时可以重用成功节点的 pending write，
+避免再次执行它。节点内部的外部副作用仍必须由应用保证幂等。
+
+三种 Durability 模式在延迟与崩溃暴露面之间取舍：
+
+| 模式 | 行为 |
 |---|---|
-| [`examples/quick-agent`](examples/quick-agent) | 最小 Agent 入口 |
-| [`examples/multi-agent`](examples/multi-agent) | 监督者 + 并行子 Agent |
-| [`examples/basic`](examples/basic) | 无 LLM 的类型化 StateGraph |
+| `sync` | 每个 Checkpoint 落盘成功后才进入下一 super-step |
+| `async` | 保持写入顺序，同时让 Checkpoint I/O 与后续执行重叠 |
+| `exit` | 中间 Checkpoint 留在内存，只发布最终或恢复边界 |
 
-多 Agent 见 [docs/agents.md](docs/agents.md)；与 langchaingo 协作见
-[docs/LANGCHAINGO.md](docs/LANGCHAINGO.md)；对比见
-[docs/COMPARISON.md](docs/COMPARISON.md)。
+在性能数据证明有必要之前，应优先使用 `sync`。
 
-## 包结构
+## 建议学习顺序
 
-| 包 | 用途 |
-|---|---|
-| `graph` | 强类型图构建器、编译器、运行时、流式输出、中断和状态检查 |
-| `channel` | Pregel 风格强类型 Channel 原语 |
-| `checkpoint/*` | 内存、SQLite、PostgreSQL checkpoint saver 与 codec |
-| `functional` | 持久化任务、Future 和强类型入口 |
-| `prebuilt` | 消息、ToolNode、`ChatModelAgent`、`DeepAgent`、多 Agent 协调和 ReAct 组件 |
-| `retrieval` | 文本分块、BM25/向量/混合检索、摄取和 Retriever Tool |
-| `memory` | 滑动窗口、摘要和 RAG 上下文模型中间件 |
-| `store/*` | 长期键值存储、TTL、Embedding 与向量存储 |
-| `redis/*` | 可选 Redis checkpoint、长期 Store 和任务缓存模块 |
-| `remote` | 强类型 HTTP/SSE 服务端与客户端 |
-| `backend/distributed` | 租约队列、事件日志、中断和事务 Outbox |
-| `backend/temporal` | 与供应商无关的 Temporal Adapter 和可选官方 SDK Binding |
+| 步骤 | 阅读或运行 | 目标 |
+|---|---|---|
+| 1 | [`examples/basic`](examples/basic) | State、Delta、Reducer、Node、Edge |
+| 2 | [`examples/conditional-routing`](examples/conditional-routing) 与 [`examples/fanout`](examples/fanout) | 路由和确定性并发归并 |
+| 3 | [`examples/checkpoint-resume`](examples/checkpoint-resume) | Thread、Codec、Checkpoint、历史 |
+| 4 | [`examples/interrupt-resume`](examples/interrupt-resume) | 人机协作与持久化恢复 |
+| 5 | [`examples/time-travel`](examples/time-travel) | 重放与不可变分支 |
+| 6 | [`examples/streaming`](examples/streaming) | Values、Updates 与终态事件 |
+| 7 | [`examples/subgraph`](examples/subgraph) | 强类型组合与嵌套持久化 |
+| 8 | [架构](ARCHITECTURE.md)、[持久化](docs/DURABILITY.md)和[版本策略](docs/VERSIONING.md) | 生产与兼容性边界 |
 
-## 开箱即用的 Agent
+## 核心与可选模块
 
-`prebuilt.NewChatModelAgent` 为单模型 Agent 提供默认的可持久化消息状态、系统提示词注入、
-ReAct 工具循环和面向文本输入的 `Run` 方法，无需自行声明 State、Delta、Reducer 与 Adapter。
+项目有意让模型和基础设施集成与核心模块保持隔离。
 
-`prebuilt.NewAgentRunner` 是 ChatModelAgent、DeepAgent、Router、Supervisor 和 Handoff
-共用的应用层执行入口。`Query` 默认只暴露消息、自定义数据、中断、完成和错误事件，应用无需理解
-Graph StreamMode；`Resume` 使用同一事件模型继续可持久化的人机协作会话。
+| 范围 | 包 | 状态 |
+|---|---|---|
+| 核心运行时 | `graph`、`channel`、`checkpoint/*` | **稳定化中** |
+| 核心辅助 | `functional`、`cache`、`store/*` | **Experimental** |
+| Agent 便利层 | `prebuilt`、`memory`、`retrieval` | **Experimental** |
+| 集成 | `providers`、`mcpclient`、`remote`、`redis`、`observability/otel`、`backend/temporal` | **可选 / Experimental** |
 
-复杂任务可以使用 `prebuilt.NewDeepAgent`。它默认加入 `write_todos` 计划工具和 `task`
-委派工具，并自动提供一个上下文隔离的通用子 Agent；也可以注册使用不同模型、提示词和工具集的
-专用 `SubAgent`。模型在同一轮发出多个 `task` 调用时，现有 ToolNode 会并行执行这些任务，
-再按调用顺序把最终结果交给主 Agent 汇总。只需要 Supervisor/Worker 模式时，可以直接使用
-`NewMultiAgentCoordinator`。
+建议先掌握核心运行时，只在应用确实需要时加入集成模块。Agent 示例与说明仍可通过
+[docs/agents.md](docs/agents.md)和[examples/README.md](examples/README.md)查阅。
 
-此外，`NewRouterAgent` 提供单轮分类、并行分发与汇总，`NewHandoffAgent` 将当前 Agent
-作为可 checkpoint 的状态并支持直接交接，`FallbackChatModel` 提供模型/供应商顺序降级。
-Agent streaming 会透传带子 Agent 标识的消息块，自定义 callbacks 可以观察模型、单个工具和
-委派生命周期。
+## 投入生产前
 
-先运行无凭据的 [`examples/agent-runner`](examples/agent-runner)，再通过
-[`examples/multi-agent`](examples/multi-agent) 查看完整的 ChatModelAgent、DeepAgent 与并行协调；
-设计与持久化子 Agent 配置见 [`docs/agents.md`](docs/agents.md)。
-完整文档入口见 [`docs/README.md`](docs/README.md)，其中包含 streaming 与 callbacks 专题。
+- 固定精确的 Module 版本。
+- 为每一种持久化类型使用显式、带版本的 Codec。
+- 控制 State 体积；大文档和制品放在 Checkpoint 之外。
+- 保证节点外部副作用幂等。
+- 明确设置节点超时、重试条件和并发上限。
+- 使用与生产相同的 Saver 演练故障恢复。
+- 规划 Checkpoint 清理、数据库备份和 Schema 迁移。
+- 在日志与 Trace 中传播 `run_id`、`thread_id` 和 Checkpoint 坐标。
 
-## 兼容性边界
-
-LangGraph Go 会在适合 Go 的概念上追求行为兼容，并有意使用 Go 风格 API，
-而不是照搬 Python 语法。目前已知差异包括：
-
-- Python 底层 `Pregel` / `NodeBuilder` 构建接口
-- `defer=True` 节点和单次运行的 `sync` / `async` / `exit` durability 模式
-- Python v3 stream transformer 与图形 UI 辅助 API
-- 部分便利性及旧版 Prebuilt 导出
-- 完整的托管 LangGraph Platform 与 Python SDK 协议覆盖
-
-详细、基于测试证据的状态记录在 [`COMPATIBILITY.md`](COMPATIBILITY.md)。
+项目尚未承诺稳定的 v1 API，也不宣称适用于所有生产场景。完整入口见
+[文档索引](docs/README.md)；任何无法通过测试复现的恢复或兼容问题都应提交 Issue。
 
 ## 开发
 
@@ -143,6 +250,10 @@ LangGraph Go 会在适合 Go 的概念上追求行为兼容，并有意使用 Go
 go test ./...
 go vet ./...
 ```
+
+本仓库使用 Go workspace；修改可选模块时，还应分别在 `providers`、`mcpclient`、
+`remote`、`redis`、`observability/otel` 与 `backend/temporal` 目录运行上述命令。
+整个 workspace 要求 Go 1.25 或更高版本。
 
 设置 `LANGGRAPH_POSTGRES_DSN` 可启用数据库集成测试；设置
 `LANGGRAPH_TEMPORAL_ADDRESS` 可启用 Temporal 集成测试。CI 会在 Linux 上运行单元测试、

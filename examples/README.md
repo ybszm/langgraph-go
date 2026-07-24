@@ -27,6 +27,7 @@ does not require credentials or external services.
 | `basic` | Typed state, delta, reducer, node, and edge |
 | `conditional-routing` | Conditional loop over reduced state |
 | `fanout` | Concurrent fan-out with deterministic reduction |
+| `deferred` | Finalization node that runs after ordinary branches drain |
 | `streaming` | Values, updates, custom, and terminal events |
 | `subgraph` | Typed parent/child graph composition |
 | `functional-api` | Concurrent durable-task facade |

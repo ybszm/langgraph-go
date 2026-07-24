@@ -16,8 +16,8 @@ var (
 	ErrUnknownNode = errors.New("unknown node")
 	// ErrInvalidRunConfig indicates an invalid execution configuration.
 	ErrInvalidRunConfig = errors.New("invalid run config")
-	// ErrUnsupportedDurability indicates a Durability mode that is not
-	// implemented by this runtime (async/exit today).
+	// ErrUnsupportedDurability is retained for optional backends that cannot
+	// implement a recognized durability mode.
 	ErrUnsupportedDurability = errors.New("unsupported durability mode")
 	// ErrRecursionLimit indicates that execution exceeded its super-step limit.
 	ErrRecursionLimit = errors.New("graph recursion limit reached")

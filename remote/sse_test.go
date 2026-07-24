@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -51,6 +52,45 @@ func TestSSEServerAndClientPreserveEventOrderAndIDs(t *testing.T) {
 	if len(events) != 2 || events[0].ID != "1" || events[1].ID != "final-id" ||
 		!reflect.DeepEqual([]string{events[0].Mode, events[1].Mode}, []string{"updates", "values"}) {
 		t.Fatalf("events=%+v", events)
+	}
+}
+
+func TestSSEServerRejectsInjectedEventFields(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		event remote.StreamEvent
+	}{
+		{name: "id", event: remote.StreamEvent{ID: "safe\nevent: forged", Mode: "updates", Data: json.RawMessage(`1`)}},
+		{name: "mode", event: remote.StreamEvent{ID: "safe", Mode: "updates\n\nevent: forged", Data: json.RawMessage(`1`)}},
+	} {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			backend := fakeRemoteGraph{stream: func(context.Context, invokeInput, graph.RunConfig) <-chan remote.StreamEvent {
+				events := make(chan remote.StreamEvent, 1)
+				events <- test.event
+				close(events)
+				return events
+			}}
+			handler, err := remote.NewServer[invokeInput, invokeOutput](backend, remote.ServerOptions{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			server := httptest.NewServer(handler)
+			defer server.Close()
+			client, err := remote.NewClient[invokeInput, invokeOutput](server.URL, server.Client())
+			if err != nil {
+				t.Fatal(err)
+			}
+			var events []remote.StreamEvent
+			for event := range client.Stream(context.Background(), invokeInput{}, remote.RunConfig{}) {
+				events = append(events, event)
+			}
+			if len(events) != 1 || events[0].Error == nil ||
+				events[0].Error.Code != remote.CodeProtocol ||
+				!strings.Contains(events[0].Error.Message, "forbidden") {
+				t.Fatalf("events=%+v, want one protocol error", events)
+			}
+		})
 	}
 }
 

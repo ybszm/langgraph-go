@@ -13,8 +13,8 @@ No row below should be interpreted as a drop-in Python API guarantee.
 
 | Area | Status | Notes |
 |---|---|---|
-| Typed StateGraph | Partial | Typed nodes, reducers, schemas, static/conditional/waiting edges, Send, Command, compilation and inspection. Default compile still requires every node (and END) reachable from START—stricter than Python—but `WithAllowUnreachableNodes` / `WithAllowUnreachableEND` can relax that. `WithDeferred` records deferred nodes (`IsDeferred`); full Python deferred barrier scheduling remains open. |
-| Pregel runtime | Partial | Deterministic BSP execution, concurrency, retries, caching, timeouts, pending-write recovery. `RunConfig.Durability` exposes sync/async/exit names; only sync is implemented (`ErrUnsupportedDurability` otherwise). No public low-level `Pregel`/`NodeBuilder` facade. |
+| Typed StateGraph | Partial | Typed nodes, reducers, schemas, static/conditional/waiting edges, Send, Command, compilation and inspection. Default compile still requires every node (and END) reachable from START—stricter than Python—but `WithAllowUnreachableNodes` / `WithAllowUnreachableEND` can relax that. `WithDeferred` delays edge-routed nodes until ordinary work drains, collapses triggers across super-steps, and persists parked triggers; dynamic `Send` retains upstream immediate PUSH semantics. |
+| Pregel runtime | Partial | Deterministic BSP execution, concurrency, retries, caching, timeouts, pending-write recovery, and sync/async/exit durability modes. No public low-level `Pregel`/`NodeBuilder` facade. |
 | Channels | Supported | Last/Any/Ephemeral/Untracked values, aggregate, topic, named barrier, delta, checkpoint versions, and freshness scheduling. |
 | Streaming | Partial | Values, updates, messages, custom, debug, interrupts, subgraphs, backpressure, run-event v3, and native SSE provider chunks. Python stream-transformer and graph-UI APIs are absent. |
 | Checkpoints | Supported | Memory, native SQLite/PostgreSQL, optional Redis, history, pending writes, replay, forks, encryption, and typed codecs. Python physical adapters require isolated schemas/databases. |

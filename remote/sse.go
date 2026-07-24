@@ -109,6 +109,16 @@ func (s *Server[I, O]) serveStream(writer http.ResponseWriter, request *http.Req
 				}
 				continue
 			}
+			if err := validateSSEEvent(event); err != nil {
+				event = StreamEvent{
+					ID:   fmt.Sprint(sequence),
+					Mode: "error",
+					Error: &Error{
+						Code:    CodeProtocol,
+						Message: err.Error(),
+					},
+				}
+			}
 			encoded, err := json.Marshal(event)
 			if err != nil {
 				event = StreamEvent{ID: event.ID, Mode: "error", Error: &Error{Code: CodeProtocol, Message: err.Error()}}
@@ -120,6 +130,16 @@ func (s *Server[I, O]) serveStream(writer http.ResponseWriter, request *http.Req
 			flusher.Flush()
 		}
 	}
+}
+
+func validateSSEEvent(event StreamEvent) error {
+	if strings.ContainsAny(event.ID, "\r\n\x00") {
+		return fmt.Errorf("%w: event ID contains a forbidden control character", ErrInvalidSSE)
+	}
+	if strings.ContainsAny(event.Mode, "\r\n") {
+		return fmt.Errorf("%w: event mode contains a forbidden line break", ErrInvalidSSE)
+	}
+	return nil
 }
 
 // Stream calls the remote graph SSE endpoint. The returned channel closes on

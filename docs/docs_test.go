@@ -1,7 +1,9 @@
 package docs_test
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -15,19 +17,14 @@ func TestLocalMarkdownLinksAndVersionClaims(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() && (entry.Name() == ".git" || entry.Name() == ".gocache") {
-			return filepath.SkipDir
-		}
-		if entry.IsDir() || filepath.Ext(path) != ".md" {
-			return nil
-		}
+	paths, err := publicMarkdownFiles(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range paths {
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return err
+			t.Fatal(err)
 		}
 		text := string(data)
 		if strings.Contains(text, "Go 1.24") {
@@ -61,9 +58,35 @@ func TestLocalMarkdownLinksAndVersionClaims(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func publicMarkdownFiles(root string) ([]string, error) {
+	command := exec.Command("git", "-C", root, "ls-files", "-z", "--", "*.md")
+	if output, err := command.Output(); err == nil {
+		entries := bytes.Split(output, []byte{0})
+		paths := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			if len(entry) == 0 {
+				continue
+			}
+			paths = append(paths, filepath.Join(root, filepath.FromSlash(string(entry))))
+		}
+		return paths, nil
+	}
+
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() && (entry.Name() == ".git" || entry.Name() == ".gocache") {
+			return filepath.SkipDir
+		}
+		if !entry.IsDir() && filepath.Ext(path) == ".md" {
+			paths = append(paths, path)
+		}
 		return nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	return paths, err
 }
