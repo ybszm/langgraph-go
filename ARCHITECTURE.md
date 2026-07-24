@@ -115,8 +115,12 @@ to child workflows, and long histories to checkpoint-verified Continue-As-New.
 ## Durability
 
 See [docs/DURABILITY.md](docs/DURABILITY.md) for how Go persistence maps to
-Python durability mode names. In short: `WithPersistence` checkpoints at
-super-step boundaries; there is no public `sync`/`async`/`exit` enum yet.
+Python durability mode names. `RunConfig.Durability` exposes `sync`, `async`,
+and `exit`: Sync commits at each super-step, Async uses a run-scoped ordered
+writer and flushes before return, and Exit buffers intermediate checkpoints and
+publishes only the final or recovery boundary in each active namespace, with
+nested namespaces committed before parents. These wrappers are isolated per
+run; the compiled graph and underlying saver remain shared safely across threads.
 
 ## Compatibility policy
 

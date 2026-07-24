@@ -123,6 +123,42 @@ func TestSubgraphInheritsPersistenceInterruptsAndNestedState(t *testing.T) {
 	}
 }
 
+func TestSubgraphInterruptResumeAcrossDurabilityModes(t *testing.T) {
+	for _, durability := range []graph.Durability{graph.DurabilityAsync, graph.DurabilityExit} {
+		t.Run(string(durability), func(t *testing.T) {
+			compiled, _ := subgraphFixture(t)
+			config := graph.RunConfig{
+				ThreadID:   "subgraph-durability-" + string(durability),
+				Durability: durability,
+			}
+			if _, err := compiled.Invoke(
+				context.Background(), subParentState{Input: "seed"}, config,
+			); !errors.Is(err, graph.ErrGraphInterrupt) {
+				t.Fatalf("Invoke() err=%v", err)
+			}
+			snapshot, err := compiled.GetState(context.Background(), config, graph.WithSubgraphs())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(snapshot.Tasks) != 1 || snapshot.Tasks[0].State == nil ||
+				len(snapshot.Tasks[0].State.Interrupts) != 1 {
+				t.Fatalf("nested snapshot=%+v", snapshot)
+			}
+			resume, err := graph.Resume("approved")
+			if err != nil {
+				t.Fatal(err)
+			}
+			completed, err := compiled.Resume(context.Background(), config, resume)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if completed.Result != "seed:prepared:approved" {
+				t.Fatalf("completed=%+v", completed)
+			}
+		})
+	}
+}
+
 func TestBulkUpdateSubgraphStateDelegatesTypedSupersteps(t *testing.T) {
 	compiled, _ := subgraphFixture(t)
 	config := graph.RunConfig{ThreadID: "subgraph-bulk-thread"}

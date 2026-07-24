@@ -33,7 +33,6 @@ Also verify:
 
 - [ ] `CHANGELOG.md` has a dated section for the version you will tag
 - [ ] `COMPATIBILITY.md` and `docs/DURABILITY.md` match reality
-- [ ] `python学习文档/` remains documented as teaching-only (not a dependency)
 - [ ] Branch is pushed; prefer PR into `main` over force-pushing `main`
 - [ ] CI is green on the PR
 - [ ] Tags are created only after merge (see RELEASING.md); never rewrite

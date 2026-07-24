@@ -184,6 +184,45 @@ func TestParallelSubgraphInterruptsResumeByID(t *testing.T) {
 	}
 }
 
+func TestParallelSubgraphInterruptsAcrossDurabilityModes(t *testing.T) {
+	for _, durability := range []graph.Durability{graph.DurabilityAsync, graph.DurabilityExit} {
+		t.Run(string(durability), func(t *testing.T) {
+			compiled := parallelInterruptGraph(t)
+			config := graph.RunConfig{
+				ThreadID:       "parallel-subgraph-" + string(durability),
+				MaxConcurrency: 4, Durability: durability,
+			}
+			prompts := []string{"a", "b", "c", "d"}
+			if _, err := compiled.Invoke(
+				context.Background(), parallelInterruptParentState{Prompts: prompts}, config,
+			); !errors.Is(err, graph.ErrGraphInterrupt) {
+				t.Fatalf("Invoke() err=%v", err)
+			}
+			paused, err := compiled.GetState(context.Background(), config, graph.WithSubgraphs())
+			if err != nil || len(paused.Interrupts) != len(prompts) || len(paused.Tasks) != len(prompts) {
+				t.Fatalf("paused tasks=%d interrupts=%d err=%v", len(paused.Tasks), len(paused.Interrupts), err)
+			}
+			values := make(map[string]any, len(paused.Interrupts))
+			for _, interrupt := range paused.Interrupts {
+				prompt, decodeErr := graph.DecodeInterrupt[string](interrupt)
+				if decodeErr != nil {
+					t.Fatal(decodeErr)
+				}
+				values[interrupt.ID] = "answer:" + prompt
+			}
+			command, err := graph.ResumeByID(values)
+			if err != nil {
+				t.Fatal(err)
+			}
+			completed, err := compiled.Resume(context.Background(), config, command)
+			want := []string{"answer:a", "answer:b", "answer:c", "answer:d"}
+			if err != nil || !reflect.DeepEqual(completed.Answers, want) {
+				t.Fatalf("answers=%v want=%v err=%v", completed.Answers, want, err)
+			}
+		})
+	}
+}
+
 func TestParallelSubgraphInterruptsCanResumeInBatches(t *testing.T) {
 	compiled := parallelInterruptGraph(t)
 	config := graph.RunConfig{ThreadID: "parallel-subgraph-batched-resume", MaxConcurrency: 3}

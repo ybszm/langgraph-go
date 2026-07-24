@@ -21,6 +21,10 @@ type retainedParentState struct {
 type retainedParentDelta struct{ Result []string }
 
 func retainedFixture(t *testing.T) (*graph.CompiledGraph[retainedParentState, retainedParentDelta], *memory.Saver) {
+	return retainedFixtureWithLoop(t, false)
+}
+
+func retainedFixtureWithLoop(t *testing.T, loop bool) (*graph.CompiledGraph[retainedParentState, retainedParentDelta], *memory.Saver) {
 	t.Helper()
 	childBuilder := graph.NewStateGraph(func(_ context.Context, state retainedChildState, updates []retainedChildDelta) (retainedChildState, error) {
 		for _, update := range updates {
@@ -61,7 +65,22 @@ func retainedFixture(t *testing.T) (*graph.CompiledGraph[retainedParentState, re
 		t.Fatal(err)
 	}
 	_ = parentBuilder.AddEdge(graph.START, "retained")
-	_ = parentBuilder.AddEdge("retained", graph.END)
+	if loop {
+		if err := parentBuilder.AddConditionalEdges(
+			"retained",
+			func(_ context.Context, state retainedParentState) ([]graph.NodeID, error) {
+				if len(state.Result) < 4 {
+					return []graph.NodeID{"retained"}, nil
+				}
+				return []graph.NodeID{graph.END}, nil
+			},
+			"retained", graph.END,
+		); err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		_ = parentBuilder.AddEdge("retained", graph.END)
+	}
 	saver := memory.NewSaver()
 	parent, err := parentBuilder.Compile(graph.WithPersistence(graph.PersistenceConfig[retainedParentState, retainedParentDelta]{
 		Saver:      saver,
@@ -72,6 +91,26 @@ func retainedFixture(t *testing.T) (*graph.CompiledGraph[retainedParentState, re
 		t.Fatal(err)
 	}
 	return parent, saver
+}
+
+func TestDurabilityModesRetainStatefulSubgraphAcrossSameRun(t *testing.T) {
+	for _, durability := range []graph.Durability{graph.DurabilityAsync, graph.DurabilityExit} {
+		t.Run(string(durability), func(t *testing.T) {
+			compiled, _ := retainedFixtureWithLoop(t, true)
+			result, err := compiled.Invoke(
+				context.Background(),
+				retainedParentState{Input: "one"},
+				graph.RunConfig{
+					ThreadID:   "retained-same-run-" + string(durability),
+					Durability: durability, RecursionLimit: 10,
+				},
+			)
+			want := []string{"one", "processed", "one", "processed"}
+			if err != nil || !equalStrings(result.Result, want) {
+				t.Fatalf("result=%+v want=%v err=%v", result, want, err)
+			}
+		})
+	}
 }
 
 func TestNewRunStatefulSubgraphRetainsPreviousState(t *testing.T) {

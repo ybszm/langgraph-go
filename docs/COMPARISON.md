@@ -58,4 +58,4 @@ the roadmap notes in [CHANGELOG.md](../CHANGELOG.md) Unreleased. Priority themes
 
 1. Broader ecosystem examples (langchaingo / enterprise auth)
 2. Evaluation and multi-agent protocols
-3. Deeper deferred-node scheduling and remote SDK surface
+3. Broader remote SDK and hosted-platform surface

@@ -67,6 +67,13 @@ type scheduledTask struct {
 	hasInput bool
 }
 
+type preparedCheckpoint struct {
+	parent      checkpoint.Config
+	value       checkpoint.Checkpoint
+	metadata    checkpoint.Metadata
+	newVersions map[string]string
+}
+
 type routedDestination struct {
 	node    NodeID
 	trigger NodeID
@@ -225,11 +232,10 @@ func (g *CompiledGraph[S, D]) runInternal(
 		)
 	}
 	switch config.Durability {
-	case DurabilityUnspecified, DurabilitySync:
+	case DurabilityUnspecified, DurabilitySync, DurabilityAsync:
 		// supported (sync is the persistent runtime default)
-	case DurabilityAsync, DurabilityExit:
-		return input, fmt.Errorf("%w: %q (only %q is implemented; see docs/DURABILITY.md)",
-			ErrUnsupportedDurability, config.Durability, DurabilitySync)
+	case DurabilityExit:
+		// supported through a run-scoped buffering saver
 	default:
 		return input, fmt.Errorf("%w: unknown durability %q", ErrInvalidRunConfig, config.Durability)
 	}
@@ -263,6 +269,26 @@ func (g *CompiledGraph[S, D]) runInternal(
 		}
 	}
 
+	var exitSaver *exitBufferSaver
+	var asyncSaver *asyncQueueSaver
+	if config.Durability == DurabilityExit && g.persistence != nil {
+		exitSaver = newExitBufferSaver(g.persistence.saver)
+		clonedGraph := *g
+		clonedPersistence := *g.persistence
+		clonedPersistence.saver = exitSaver
+		clonedGraph.persistence = &clonedPersistence
+		g = &clonedGraph
+	} else if config.Durability == DurabilityAsync && g.persistence != nil {
+		runContext, cancelRun := context.WithCancelCause(ctx)
+		asyncSaver = newAsyncQueueSaver(runContext, g.persistence.saver, cancelRun)
+		clonedGraph := *g
+		clonedPersistence := *g.persistence
+		clonedPersistence.saver = asyncSaver
+		clonedGraph.persistence = &clonedPersistence
+		g = &clonedGraph
+		ctx = runContext
+	}
+
 	config.Callbacks = append([]GraphCallback(nil), config.Callbacks...)
 	notifyGraphRunStart(ctx, config, input)
 	defer func() {
@@ -272,6 +298,38 @@ func (g *CompiledGraph[S, D]) runInternal(
 		}
 		notifyGraphRunError(ctx, config, runErr)
 	}()
+	if exitSaver != nil {
+		defer func() {
+			_, flushErr := exitSaver.Flush(context.WithoutCancel(ctx))
+			if flushErr == nil {
+				return
+			}
+			flushErr = persistenceError("exit-flush", checkpoint.Config{
+				ThreadID: config.ThreadID, Namespace: config.CheckpointNamespace,
+			}, flushErr)
+			if runErr == nil {
+				runErr = flushErr
+			} else {
+				runErr = errors.Join(runErr, flushErr)
+			}
+		}()
+	}
+	if asyncSaver != nil {
+		defer func() {
+			flushErr := asyncSaver.Flush()
+			if flushErr == nil {
+				return
+			}
+			flushErr = persistenceError("async-flush", checkpoint.Config{
+				ThreadID: config.ThreadID, Namespace: config.CheckpointNamespace,
+			}, flushErr)
+			if runErr == nil {
+				runErr = flushErr
+			} else {
+				runErr = errors.Join(runErr, flushErr)
+			}
+		}()
+	}
 	initialized, err := g.initializeRun(ctx, input, config)
 	if err != nil {
 		return input, err
@@ -534,7 +592,8 @@ func (g *CompiledGraph[S, D]) initializeRun(
 	config RunConfig,
 ) (runInitialization[S, D], error) {
 	if g.persistence == nil {
-		tasks, err := g.scheduleDefaultTasks(ctx, -1, 0, START, input)
+		waiting := make(map[string]map[NodeID]struct{})
+		tasks, err := g.scheduleDefaultTasks(ctx, -1, 0, START, input, waiting)
 		if err != nil {
 			return runInitialization[S, D]{}, err
 		}
@@ -543,7 +602,7 @@ func (g *CompiledGraph[S, D]) initializeRun(
 			tasks:         tasks,
 			nextStep:      0,
 			committedStep: -1,
-			waiting:       make(map[string]map[NodeID]struct{}),
+			waiting:       waiting,
 		}, nil
 	}
 
@@ -570,7 +629,9 @@ func (g *CompiledGraph[S, D]) initializeRun(
 				}
 			}
 			inputStep := tuple.Checkpoint.Step + 1
-			tasks, routeErr := g.scheduleDefaultTasks(ctx, inputStep, inputStep+1, START, state)
+			tasks, routeErr := g.scheduleDefaultTasks(
+				ctx, inputStep, inputStep+1, START, state, restored.waiting,
+			)
 			if routeErr != nil {
 				return runInitialization[S, D]{}, routeErr
 			}
@@ -657,7 +718,8 @@ func (g *CompiledGraph[S, D]) initializeRun(
 		)
 	}
 
-	tasks, err := g.scheduleDefaultTasks(ctx, -1, 0, START, input)
+	waiting := make(map[string]map[NodeID]struct{})
+	tasks, err := g.scheduleDefaultTasks(ctx, -1, 0, START, input, waiting)
 	if err != nil {
 		return runInitialization[S, D]{}, err
 	}
@@ -669,7 +731,7 @@ func (g *CompiledGraph[S, D]) initializeRun(
 		-1,
 		checkpoint.SourceInput,
 		config.RunID,
-		make(map[string]map[NodeID]struct{}),
+		waiting,
 		nil,
 		invocationMetadata(config.invocationParentCheckpoint),
 	)
@@ -682,7 +744,7 @@ func (g *CompiledGraph[S, D]) initializeRun(
 		nextStep:         0,
 		committedStep:    -1,
 		checkpointConfig: stored,
-		waiting:          make(map[string]map[NodeID]struct{}),
+		waiting:          waiting,
 	}, nil
 }
 
@@ -1557,6 +1619,9 @@ func (g *CompiledGraph[S, D]) resolveNextWithStates(
 		if destination == END {
 			return
 		}
+		if g.deferDestination(waiting, destination, sources...) {
+			return
+		}
 		for _, source := range sources {
 			duplicate := false
 			for _, existing := range triggers[destination] {
@@ -1700,6 +1765,9 @@ func (g *CompiledGraph[S, D]) resolveNextTasks(
 			})
 		}
 	}
+	if len(tasks) == 0 {
+		tasks = g.releaseDeferredTasks(step+1, waiting)
+	}
 	return tasks, nil
 }
 
@@ -1769,13 +1837,61 @@ func (g *CompiledGraph[S, D]) putCheckpointWithTasks(
 	seenNodes []NodeID,
 	extraMetadata ...checkpoint.Metadata,
 ) (checkpoint.Config, []scheduledTask, error) {
+	previous, err := g.loadParentCheckpoint(ctx, parent)
+	if err != nil {
+		return checkpoint.Config{}, nil, err
+	}
+	prepared, next, err := g.prepareCheckpointWithTasks(
+		ctx, parent, previous, state, next, step, source, runID, waiting, seenNodes,
+		extraMetadata...,
+	)
+	if err != nil {
+		return checkpoint.Config{}, nil, err
+	}
+	stored, err := g.persistPreparedCheckpoint(ctx, prepared)
+	if err != nil {
+		return checkpoint.Config{}, nil, persistenceError("put", parent, err)
+	}
+	return stored, next, nil
+}
+
+func (g *CompiledGraph[S, D]) loadParentCheckpoint(
+	ctx context.Context,
+	parent checkpoint.Config,
+) (checkpoint.Checkpoint, error) {
+	if parent.CheckpointID == "" {
+		return checkpoint.Checkpoint{}, nil
+	}
+	tuple, found, err := saverGetTuple(ctx, g.persistence.saver, parent)
+	if err != nil {
+		return checkpoint.Checkpoint{}, persistenceError("get-parent-channels", parent, err)
+	}
+	if !found {
+		return checkpoint.Checkpoint{}, persistenceError("get-parent-channels", parent, checkpoint.ErrNotFound)
+	}
+	return tuple.Checkpoint, nil
+}
+
+func (g *CompiledGraph[S, D]) prepareCheckpointWithTasks(
+	ctx context.Context,
+	parent checkpoint.Config,
+	previous checkpoint.Checkpoint,
+	state S,
+	next []scheduledTask,
+	step int,
+	source checkpoint.Source,
+	runID string,
+	waiting map[string]map[NodeID]struct{},
+	seenNodes []NodeID,
+	extraMetadata ...checkpoint.Metadata,
+) (preparedCheckpoint, []scheduledTask, error) {
 	id, timestamp, err := g.persistence.nextID()
 	if err != nil {
-		return checkpoint.Config{}, nil, persistenceError("generate-id", parent, err)
+		return preparedCheckpoint{}, nil, persistenceError("generate-id", parent, err)
 	}
 	encodedState, err := g.persistence.stateCodec.Encode(state)
 	if err != nil {
-		return checkpoint.Config{}, nil, persistenceError("encode-state", parent, err)
+		return preparedCheckpoint{}, nil, persistenceError("encode-state", parent, err)
 	}
 	values := map[string]checkpoint.EncodedValue{
 		checkpoint.StateChannel: checkpoint.CloneEncodedValue(encodedState),
@@ -1788,10 +1904,10 @@ func (g *CompiledGraph[S, D]) putCheckpointWithTasks(
 	for _, channel := range fixedChannels {
 		encoded, projectionErr := g.checkpointChannelSchema[channel].project(ctx, state)
 		if projectionErr != nil {
-			return checkpoint.Config{}, nil, persistenceError("project-channels", parent, projectionErr)
+			return preparedCheckpoint{}, nil, persistenceError("project-channels", parent, projectionErr)
 		}
 		if encoded.Type == "" || encoded.Version <= 0 {
-			return checkpoint.Config{}, nil, persistenceError(
+			return preparedCheckpoint{}, nil, persistenceError(
 				"project-channels", parent,
 				fmt.Errorf("%w: channel %q has an invalid encoded value", ErrCheckpointChannel, channel),
 			)
@@ -1801,40 +1917,29 @@ func (g *CompiledGraph[S, D]) putCheckpointWithTasks(
 	if g.checkpointChannels != nil {
 		projected, projectionErr := g.checkpointChannels(ctx, state)
 		if projectionErr != nil {
-			return checkpoint.Config{}, nil, persistenceError("project-channels", parent, projectionErr)
+			return preparedCheckpoint{}, nil, persistenceError("project-channels", parent, projectionErr)
 		}
 		for channel, encoded := range projected {
 			if isReservedCheckpointChannel(channel) {
-				return checkpoint.Config{}, nil, persistenceError(
+				return preparedCheckpoint{}, nil, persistenceError(
 					"project-channels", parent,
 					fmt.Errorf("%w: reserved channel %q", ErrCheckpointChannel, channel),
 				)
 			}
 			if _, fixed := g.checkpointChannelSchema[channel]; fixed {
-				return checkpoint.Config{}, nil, persistenceError(
+				return preparedCheckpoint{}, nil, persistenceError(
 					"project-channels", parent,
 					fmt.Errorf("%w: duplicate fixed channel %q", ErrCheckpointChannel, channel),
 				)
 			}
 			if encoded.Type == "" || encoded.Version <= 0 {
-				return checkpoint.Config{}, nil, persistenceError(
+				return preparedCheckpoint{}, nil, persistenceError(
 					"project-channels", parent,
 					fmt.Errorf("%w: channel %q has an invalid encoded value", ErrCheckpointChannel, channel),
 				)
 			}
 			values[channel] = checkpoint.CloneEncodedValue(encoded)
 		}
-	}
-	var previous checkpoint.Checkpoint
-	if parent.CheckpointID != "" {
-		tuple, found, getErr := saverGetTuple(ctx, g.persistence.saver, parent)
-		if getErr != nil {
-			return checkpoint.Config{}, nil, persistenceError("get-parent-channels", parent, getErr)
-		}
-		if !found {
-			return checkpoint.Config{}, nil, persistenceError("get-parent-channels", parent, checkpoint.ErrNotFound)
-		}
-		previous = tuple.Checkpoint
 	}
 	channelNames := make(map[string]struct{}, len(values)+len(previous.ChannelVersions))
 	for channel := range values {
@@ -1880,7 +1985,7 @@ func (g *CompiledGraph[S, D]) putCheckpointWithTasks(
 	next = g.freshChannelTasks(next, channelVersions, versionsSeen)
 	checkpointNext, err := g.checkpointTasks(next)
 	if err != nil {
-		return checkpoint.Config{}, nil, persistenceError("encode-task-input", parent, err)
+		return preparedCheckpoint{}, nil, persistenceError("encode-task-input", parent, err)
 	}
 	value := checkpoint.Checkpoint{
 		Version:         checkpoint.CurrentVersion,
@@ -1894,17 +1999,26 @@ func (g *CompiledGraph[S, D]) putCheckpointWithTasks(
 		Next:            checkpointNext,
 		Waiting:         waitingCheckpoint(waiting, g.waitingEdges),
 	}
-	stored, err := g.persistence.saver.Put(
-		ctx,
-		parent,
-		value,
-		checkpointMetadata(source, step, runID, extraMetadata...),
-		newVersions,
-	)
-	if err != nil {
-		return checkpoint.Config{}, nil, persistenceError("put", parent, err)
+	prepared := preparedCheckpoint{
+		parent:      parent,
+		value:       value,
+		metadata:    checkpointMetadata(source, step, runID, extraMetadata...),
+		newVersions: newVersions,
 	}
-	return stored, next, nil
+	return prepared, next, nil
+}
+
+func (g *CompiledGraph[S, D]) persistPreparedCheckpoint(
+	ctx context.Context,
+	prepared preparedCheckpoint,
+) (checkpoint.Config, error) {
+	return g.persistence.saver.Put(
+		ctx,
+		prepared.parent,
+		prepared.value,
+		prepared.metadata,
+		prepared.newVersions,
+	)
 }
 
 func (g *CompiledGraph[S, D]) freshChannelTasks(
@@ -1985,6 +2099,23 @@ func waitingCheckpoint(
 			}
 		}
 	}
+	deferredKeys := make([]string, 0)
+	for key := range waiting {
+		if strings.HasPrefix(key, deferredWaitingPrefix) {
+			deferredKeys = append(deferredKeys, key)
+		}
+	}
+	sort.Strings(deferredKeys)
+	for _, key := range deferredKeys {
+		triggers := make([]string, 0, len(waiting[key]))
+		for trigger := range waiting[key] {
+			triggers = append(triggers, string(trigger))
+		}
+		sort.Strings(triggers)
+		if len(triggers) > 0 {
+			result[key] = triggers
+		}
+	}
 	return result
 }
 
@@ -2016,7 +2147,11 @@ func (g *CompiledGraph[S, D]) defaultRoutes(
 }
 
 func (g *CompiledGraph[S, D]) scheduleDefaultTasks(
-	ctx context.Context, routeStep, taskStep int, source NodeID, state S,
+	ctx context.Context,
+	routeStep, taskStep int,
+	source NodeID,
+	state S,
+	waiting map[string]map[NodeID]struct{},
 ) ([]scheduledTask, error) {
 	routes, err := g.defaultRoutes(ctx, routeStep, source, state)
 	if err != nil {
@@ -2026,6 +2161,9 @@ func (g *CompiledGraph[S, D]) scheduleDefaultTasks(
 	byNode := make(map[NodeID]int, len(routes))
 	for _, route := range routes {
 		if route.node == END {
+			continue
+		}
+		if g.deferDestination(waiting, route.node, route.trigger) {
 			continue
 		}
 		if index, exists := byNode[route.node]; exists {
@@ -2038,12 +2176,68 @@ func (g *CompiledGraph[S, D]) scheduleDefaultTasks(
 			taskID: fmt.Sprintf("step:%d:task:%d:node:%s", taskStep, len(tasks), route.node),
 		})
 	}
+	if len(tasks) == 0 {
+		tasks = g.releaseDeferredTasks(taskStep, waiting)
+	}
 	return tasks, nil
 }
 
-// IsDeferred reports whether a node was registered with WithDeferred.
-// Runtime still schedules deferred nodes with peers today; full deferred
-// barrier semantics remain Partial (COMPATIBILITY.md).
+const deferredWaitingPrefix = "__deferred__:"
+
+func deferredWaitingKey(node NodeID) string {
+	return deferredWaitingPrefix + string(node)
+}
+
+func (g *CompiledGraph[S, D]) deferDestination(
+	waiting map[string]map[NodeID]struct{},
+	destination NodeID,
+	triggers ...NodeID,
+) bool {
+	if _, deferred := g.deferredNodes[destination]; !deferred {
+		return false
+	}
+	key := deferredWaitingKey(destination)
+	pending := waiting[key]
+	if pending == nil {
+		pending = make(map[NodeID]struct{})
+		waiting[key] = pending
+	}
+	for _, trigger := range triggers {
+		pending[trigger] = struct{}{}
+	}
+	return true
+}
+
+func (g *CompiledGraph[S, D]) releaseDeferredTasks(
+	step int,
+	waiting map[string]map[NodeID]struct{},
+) []scheduledTask {
+	nodes := make([]NodeID, 0, len(g.deferredNodes))
+	for node := range g.deferredNodes {
+		if len(waiting[deferredWaitingKey(node)]) > 0 {
+			nodes = append(nodes, node)
+		}
+	}
+	sort.Slice(nodes, func(i, j int) bool { return nodes[i] < nodes[j] })
+	tasks := make([]scheduledTask, 0, len(nodes))
+	for _, node := range nodes {
+		key := deferredWaitingKey(node)
+		triggers := make([]NodeID, 0, len(waiting[key]))
+		for trigger := range waiting[key] {
+			triggers = append(triggers, trigger)
+		}
+		sort.Slice(triggers, func(i, j int) bool { return triggers[i] < triggers[j] })
+		delete(waiting, key)
+		tasks = append(tasks, scheduledTask{
+			node: node, triggers: triggers,
+			taskID: fmt.Sprintf("step:%d:task:%d:node:%s", step, len(tasks), node),
+		})
+	}
+	return tasks
+}
+
+// IsDeferred reports whether a node waits until no ordinary graph work remains
+// before it is scheduled.
 func (g *CompiledGraph[S, D]) IsDeferred(id NodeID) bool {
 	if g == nil {
 		return false

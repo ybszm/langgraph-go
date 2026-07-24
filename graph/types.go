@@ -283,9 +283,9 @@ const (
 	DurabilityUnspecified Durability = ""
 	// DurabilitySync commits checkpoints at super-step boundaries (supported).
 	DurabilitySync Durability = "sync"
-	// DurabilityAsync is reserved; requesting it returns ErrUnsupportedDurability.
+	// DurabilityAsync overlaps ordered checkpoint IO with subsequent execution.
 	DurabilityAsync Durability = "async"
-	// DurabilityExit is reserved; requesting it returns ErrUnsupportedDurability.
+	// DurabilityExit publishes only the final or recovery boundary per namespace.
 	DurabilityExit Durability = "exit"
 )
 
@@ -309,7 +309,7 @@ type RunConfig struct {
 	// MaxConcurrency limits simultaneously executing nodes. Zero means the
 	// number of tasks in the current super-step. A negative value is invalid.
 	MaxConcurrency int
-	// Durability controls checkpoint timing. Only Sync is implemented today.
+	// Durability controls checkpoint timing. Sync, Async, and Exit are implemented.
 	Durability Durability
 	// ThreadID selects the durable execution thread when the graph was
 	// compiled with a checkpointer.

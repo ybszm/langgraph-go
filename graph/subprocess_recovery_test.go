@@ -111,15 +111,23 @@ func TestSQLiteWorkerKillRecoveryPreservesSuccessfulPeer(t *testing.T) {
 	if err := command.Start(); err != nil {
 		t.Fatal(err)
 	}
-	killed := false
+	waitDone := make(chan error, 1)
+	go func() {
+		waitDone <- command.Wait()
+	}()
+	terminated := false
 	defer func() {
-		if !killed && command.Process != nil {
+		if !terminated && command.Process != nil {
 			_ = command.Process.Kill()
-			_ = command.Wait()
+			select {
+			case <-waitDone:
+			case <-time.After(time.Second):
+			}
 		}
 	}()
 
 	var pollingSaver *checkpointsqlite.Saver
+	foundPendingResult := false
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		if pollingSaver == nil {
@@ -133,17 +141,31 @@ func TestSQLiteWorkerKillRecoveryPreservesSuccessfulPeer(t *testing.T) {
 			if err == nil && found {
 				for _, write := range tuple.PendingWrites {
 					if write.Channel == checkpoint.TaskResultChannel {
-						killed = true
+						foundPendingResult = true
 						if err := command.Process.Kill(); err != nil {
-							t.Fatal(err)
+							select {
+							case waitErr := <-waitDone:
+								terminated = true
+								t.Fatalf(
+									"helper exited before kill: %v; output=%s",
+									waitErr, processOutput.String(),
+								)
+							case <-time.After(100 * time.Millisecond):
+								t.Fatalf("kill helper: %v", err)
+							}
 						}
-						_ = command.Wait()
+						select {
+						case <-waitDone:
+							terminated = true
+						case <-time.After(time.Second):
+							t.Fatal("timed out waiting for killed helper process")
+						}
 						break
 					}
 				}
 			}
 		}
-		if killed {
+		if foundPendingResult {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -151,7 +173,7 @@ func TestSQLiteWorkerKillRecoveryPreservesSuccessfulPeer(t *testing.T) {
 	if pollingSaver != nil {
 		_ = pollingSaver.Close()
 	}
-	if !killed {
+	if !foundPendingResult {
 		t.Fatalf("timed out waiting for durable pending result; helper output=%s", processOutput.String())
 	}
 

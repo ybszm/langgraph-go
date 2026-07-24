@@ -13,13 +13,23 @@ intentional API changes, and patch releases preserve public API compatibility.
 - `a2a` minimal Agent-to-Agent HTTP card + message:send protocol.
 - `httpware` bearer auth, session header, and local rate-limit middleware.
 - `examples/mcp-secure` GuardTools pattern for MCP tool binding.
-- `graph.RunConfig.Durability` (sync supported; async/exit return clear errors).
+- `graph.RunConfig.Durability` with sync/async/exit support.
 - `graph.WithDeferred` node marker + `CompiledGraph.IsDeferred`.
+- Deferred edge scheduling after ordinary work drains, including cross-step
+  trigger collapse and checkpoint-safe interrupt/resume.
+- Exit durability with run-local intermediate checkpoints, final-only history,
+  and recovery-boundary flushes for interrupts and failed super-steps.
+- Async durability with an ordered run-scoped writer, in-memory draft visibility,
+  background-error cancellation, and mandatory flush before return.
 - Graph micro-benchmarks (`BenchmarkLinearInvoke`, `BenchmarkFanOutThree`).
 
 ### Changed
 
 ### Fixed
+
+- Reject line-breaking SSE event IDs and modes before writing protocol frames.
+- Isolate async/exit checkpoint drafts by thread and namespace, retain stateful
+  child history within a run, and flush nested exit boundaries before parents.
 
 ## [0.1.0] - 2026-07-23
 

@@ -62,6 +62,17 @@ func (s *Server[I, O]) streamRemoteRun(writer http.ResponseWriter, request *http
 		}
 		event := StreamEvent{ID: result.Event.ID, Mode: result.Event.Mode, Data: append(json.RawMessage(nil), result.Event.Data...)}
 		if err := writeRemoteSSE(writer, event); err != nil {
+			if errors.Is(err, ErrInvalidSSE) {
+				_ = writeRemoteSSE(writer, StreamEvent{
+					Mode: "error",
+					Error: &Error{
+						Code:    CodeProtocol,
+						Message: err.Error(),
+					},
+				})
+				_, _ = fmt.Fprintf(writer, ": %s\n\n", streamCompleteComment)
+				flusher.Flush()
+			}
 			return
 		}
 		flusher.Flush()
@@ -73,6 +84,9 @@ func (s *Server[I, O]) streamRemoteRun(writer http.ResponseWriter, request *http
 }
 
 func writeRemoteSSE(writer http.ResponseWriter, event StreamEvent) error {
+	if err := validateSSEEvent(event); err != nil {
+		return err
+	}
 	encoded, err := json.Marshal(event)
 	if err != nil {
 		return err

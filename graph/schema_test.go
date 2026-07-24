@@ -178,9 +178,7 @@ func TestSchemaGraphProjectsStateBearingStreamEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	var values []schemaOutput
-	for event := range compiled.StreamWithOptions(context.Background(), schemaInput{Seed: 3}, graph.RunConfig{}, graph.StreamOptions{
-		Modes: []graph.StreamMode{graph.StreamValues, graph.StreamDone},
-	}) {
+	for event := range compiled.Stream(context.Background(), schemaInput{Seed: 3}, graph.RunConfig{}) {
 		if event.Err != nil {
 			t.Fatal(event.Err)
 		}
@@ -190,5 +188,90 @@ func TestSchemaGraphProjectsStateBearingStreamEvents(t *testing.T) {
 	}
 	if len(values) != 3 || values[0] != (schemaOutput{Total: 3}) || values[len(values)-1] != (schemaOutput{Total: 5}) {
 		t.Fatalf("stream values=%+v", values)
+	}
+}
+
+func TestSchemaGraphInvokeCommandAndStreamProjectPublicOutput(t *testing.T) {
+	builder := graph.NewStateGraph(schemaReducer)
+	if err := builder.AddNode("human", func(_ context.Context, _ schemaState, runtime graph.Runtime) (graph.Command[schemaDelta], error) {
+		if _, err := graph.AwaitResume[string](runtime, "continue?"); err != nil {
+			return graph.NoCommand[schemaDelta](), err
+		}
+		return graph.Update(schemaDelta{Add: 4}), nil
+	}, graph.WithDynamicInterrupts()); err != nil {
+		t.Fatal(err)
+	}
+	if err := builder.AddEdge(graph.START, "human"); err != nil {
+		t.Fatal(err)
+	}
+	if err := builder.AddEdge("human", graph.END); err != nil {
+		t.Fatal(err)
+	}
+	compiled, err := graph.CompileSchemaGraph(
+		builder,
+		graph.SchemaAdapter[schemaInput, schemaState, schemaOutput]{
+			Input: func(_ context.Context, input schemaInput) (schemaState, error) {
+				return schemaState{Total: input.Seed, Private: "never public"}, nil
+			},
+			Output: func(_ context.Context, state schemaState) (schemaOutput, error) {
+				return schemaOutput{Total: state.Total}, nil
+			},
+		},
+		graph.WithPersistence(graph.PersistenceConfig[schemaState, schemaDelta]{
+			Saver:      checkpointmemory.NewSaver(),
+			StateCodec: checkpoint.MustJSONCodec[schemaState]("tests/schema-command-state", 1),
+			DeltaCodec: checkpoint.MustJSONCodec[schemaDelta]("tests/schema-command-delta", 1),
+		}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resume, err := graph.Resume("yes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := graph.WithResume(graph.Update(schemaDelta{Add: 10}), resume)
+	invokeConfig := graph.RunConfig{ThreadID: "schema-invoke-command"}
+	if _, err := compiled.Invoke(context.Background(), schemaInput{Seed: 2}, invokeConfig); !errors.Is(err, graph.ErrGraphInterrupt) {
+		t.Fatalf("Invoke() err=%v", err)
+	}
+	result, err := compiled.InvokeCommand(context.Background(), command, invokeConfig)
+	if err != nil || result != (schemaOutput{Total: 16}) {
+		t.Fatalf("InvokeCommand() result=%+v err=%v", result, err)
+	}
+
+	streamConfig := graph.RunConfig{ThreadID: "schema-invoke-command-stream"}
+	if _, err := compiled.Invoke(context.Background(), schemaInput{Seed: 3}, streamConfig); !errors.Is(err, graph.ErrGraphInterrupt) {
+		t.Fatalf("stream setup Invoke() err=%v", err)
+	}
+	var final schemaOutput
+	for event := range compiled.InvokeCommandStream(context.Background(), command, streamConfig) {
+		if event.Err != nil {
+			t.Fatal(event.Err)
+		}
+		if event.Mode == graph.StreamDone {
+			final = event.State
+		}
+	}
+	if final != (schemaOutput{Total: 17}) {
+		t.Fatalf("stream final=%+v", final)
+	}
+
+	resumeConfig := graph.RunConfig{ThreadID: "schema-resume-stream"}
+	if _, err := compiled.Invoke(context.Background(), schemaInput{Seed: 4}, resumeConfig); !errors.Is(err, graph.ErrGraphInterrupt) {
+		t.Fatalf("resume stream setup Invoke() err=%v", err)
+	}
+	final = schemaOutput{}
+	for event := range compiled.ResumeStream(context.Background(), resumeConfig, resume) {
+		if event.Err != nil {
+			t.Fatal(event.Err)
+		}
+		if event.Mode == graph.StreamDone {
+			final = event.State
+		}
+	}
+	if final != (schemaOutput{Total: 8}) {
+		t.Fatalf("resume stream final=%+v", final)
 	}
 }

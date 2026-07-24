@@ -28,22 +28,16 @@ LangGraph Go 是由社区独立维护的 Go 实现，借鉴了
 > Python API。在将其视为直接替代品之前，请先阅读[兼容性说明](COMPATIBILITY.md)
 > 与[持久化语义](docs/DURABILITY.md)。
 
-## 仓库目录说明
-
-- **核心 Go 运行时**：仓库根目录包（`graph`、`checkpoint`、`prebuilt` 等）以及
-  `go.work` 中的可选 module。
-- **`python学习文档/`**：**独立教学项目**（Python MiniGraph + 小规模 Go 对照实现），
-  不被已发布 module 引用，也**不能**当作主库 API 文档。生产向用法请从根 README
-  与 `examples/` 入手。
-
 ## 主要能力
 
 - 基于泛型的 `StateGraph[S, D]`，提供强类型状态与更新
 - BSP 风格 super-step 与确定性归并
 - 静态边、条件边、等待边和动态 `Send` 边
+- 普通图任务结束后再运行的 deferred 收尾节点
 - `Command` 更新、动态路由、父图定向与持久化恢复
 - 带并发限制、重试、缓存、超时和取消的节点执行
 - 内存、SQLite、PostgreSQL 和可选 Redis checkpoint 实现
+- 单次运行可选 sync、有序 async 和仅保留最终状态的 exit durability
 - 中断与恢复、重放、分支、时间旅行和嵌套子图
 - Values、Updates、Messages、Custom、Debug 和子图流式输出，包括模型原生 SSE 分片
 - 带任务、Future、持久化和恢复能力的强类型 Functional API
@@ -130,7 +124,6 @@ LangGraph Go 会在适合 Go 的概念上追求行为兼容，并有意使用 Go
 而不是照搬 Python 语法。目前已知差异包括：
 
 - Python 底层 `Pregel` / `NodeBuilder` 构建接口
-- `defer=True` 节点和单次运行的 `sync` / `async` / `exit` durability 模式
 - Python v3 stream transformer 与图形 UI 辅助 API
 - 部分便利性及旧版 Prebuilt 导出
 - 完整的托管 LangGraph Platform 与 Python SDK 协议覆盖
@@ -143,6 +136,10 @@ LangGraph Go 会在适合 Go 的概念上追求行为兼容，并有意使用 Go
 go test ./...
 go vet ./...
 ```
+
+本仓库使用 Go workspace；修改可选模块时，还应分别在 `providers`、`mcpclient`、
+`remote`、`redis`、`observability/otel` 与 `backend/temporal` 目录运行上述命令。
+整个 workspace 要求 Go 1.25 或更高版本。
 
 设置 `LANGGRAPH_POSTGRES_DSN` 可启用数据库集成测试；设置
 `LANGGRAPH_TEMPORAL_ADDRESS` 可启用 Temporal 集成测试。CI 会在 Linux 上运行单元测试、

@@ -31,23 +31,16 @@ LangChain product and is not a source-to-source port of the Python package.
 > [Compatibility](COMPATIBILITY.md) and [Durability](docs/DURABILITY.md) before
 > adopting it as a drop-in replacement.
 
-## Repository layout notes
-
-- **Core Go runtime**: packages at the repo root (`graph`, `checkpoint`,
-  `prebuilt`, …) and optional modules listed in `go.work`.
-- **`python学习文档/`**: a **standalone teaching project** (Python MiniGraph + a
-  small Go runtime rewrite). It is not imported by the published modules and is
-  not a substitute for the main library API. Start with the root README examples
-  or `examples/` for production-oriented usage.
-
 ## Highlights
 
 - Generic `StateGraph[S, D]` API with typed state and updates
 - BSP-style super-steps with deterministic reduction
 - Static, conditional, waiting, and dynamic `Send` edges
+- Deferred finalization nodes that run after ordinary graph work drains
 - `Command` updates, routing, parent targeting, and durable resume
 - Concurrent nodes with limits, retries, caching, timeouts, and cancellation
 - Checkpointing with memory, SQLite, PostgreSQL, and optional Redis implementations
+- Per-run sync, ordered-async, and final-only exit durability modes
 - Interrupt/resume, replay, branching, time travel, and nested subgraphs
 - Values, updates, messages, custom, debug, and subgraph streaming, including native provider chunks
 - Typed Functional API with tasks, futures, persistence, and recovery
@@ -187,7 +180,6 @@ cleanly to Go. It intentionally uses Go APIs rather than mirroring Python syntax
 Known gaps include:
 
 - low-level Python `Pregel` / `NodeBuilder` construction
-- `defer=True` nodes and per-run `sync` / `async` / `exit` durability modes
 - the Python v3 stream-transformer and graph-UI helper APIs
 - several convenience and legacy Prebuilt exports
 - full hosted LangGraph Platform and Python SDK protocol coverage
@@ -203,8 +195,9 @@ go vet ./...
 ```
 
 This repository is a Go workspace. Run the same commands from `providers`,
-`mcpclient`, `remote`, `observability/otel`, and `backend/temporal` when changing
-an optional module. Go 1.25 or newer is required across the workspace.
+`mcpclient`, `remote`, `redis`, `observability/otel`, and `backend/temporal`
+when changing an optional module. Go 1.25 or newer is required across the
+workspace.
 
 Database integration tests are enabled with `LANGGRAPH_POSTGRES_DSN`. Temporal
 integration is enabled with `LANGGRAPH_TEMPORAL_ADDRESS`. The CI workflow runs

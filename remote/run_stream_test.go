@@ -14,6 +14,25 @@ import (
 	"github.com/ybszm/langgraph-go/remote"
 )
 
+type unsafeEventLog struct {
+	event distributed.Event
+}
+
+func (l unsafeEventLog) Append(context.Context, distributed.AppendEvent) (distributed.Event, error) {
+	return distributed.Event{}, nil
+}
+
+func (l unsafeEventLog) List(context.Context, distributed.EventQuery) ([]distributed.Event, error) {
+	return []distributed.Event{l.event}, nil
+}
+
+func (l unsafeEventLog) Tail(context.Context, distributed.EventQuery) <-chan distributed.EventResult {
+	output := make(chan distributed.EventResult, 1)
+	output <- distributed.EventResult{Event: l.event}
+	close(output)
+	return output
+}
+
 func TestRemoteRunStreamTailsDurableEventLogFromCursor(t *testing.T) {
 	eventIDs := []string{"event-1", "event-2"}
 	eventIndex := 0
@@ -51,6 +70,44 @@ func TestRemoteRunStreamTailsDurableEventLogFromCursor(t *testing.T) {
 	}
 	if len(resumed) != 1 || resumed[0].ID != "event-2" {
 		t.Fatalf("resumed=%+v", resumed)
+	}
+}
+
+func TestRemoteRunStreamRejectsUnsafeEventLogFields(t *testing.T) {
+	handler, err := remote.NewServer[invokeInput, invokeOutput](
+		fakeInvoker{run: func(context.Context, invokeInput, graph.RunConfig) (invokeOutput, error) {
+			return invokeOutput{}, nil
+		}},
+		remote.ServerOptions{
+			IDGenerator: func() string { return "run-1" },
+			EventLog: unsafeEventLog{event: distributed.Event{
+				ID: "safe\nevent: forged", Mode: "updates", Data: json.RawMessage(`1`), Terminal: true,
+			}},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	client, err := remote.NewClient[invokeInput, invokeOutput](server.URL, server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	thread, err := client.CreateThread(context.Background(), "thread")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := client.CreateRun(context.Background(), thread.ID, invokeInput{}, remote.RunConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var events []remote.StreamEvent
+	for event := range client.StreamRun(context.Background(), thread.ID, run.ID, "") {
+		events = append(events, event)
+	}
+	if len(events) != 1 || events[0].Error == nil || events[0].Error.Code != remote.CodeProtocol {
+		t.Fatalf("events=%+v, want one protocol error", events)
 	}
 }
 

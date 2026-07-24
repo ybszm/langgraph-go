@@ -3,6 +3,7 @@ package graph_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -118,6 +119,76 @@ func TestRetryPredicateAndMaxAttempts(t *testing.T) {
 		addEdge(t, builder, "node", graph.END)
 		_, invokeErr := compileGraph(t, builder).Invoke(context.Background(), testState{}, graph.RunConfig{})
 		if !errors.Is(invokeErr, errRetryable) || calls.Load() != 2 {
+			t.Fatalf("error=%v calls=%d", invokeErr, calls.Load())
+		}
+	})
+}
+
+func TestDefaultRetryClassification(t *testing.T) {
+	transient := errors.New("transient")
+	for _, test := range []struct {
+		name  string
+		err   error
+		calls int32
+	}{
+		{name: "ordinary error", err: transient, calls: 3},
+		{name: "canceled", err: context.Canceled, calls: 1},
+		{name: "wrapped canceled", err: fmt.Errorf("request stopped: %w", context.Canceled), calls: 1},
+		{name: "deadline", err: context.DeadlineExceeded, calls: 1},
+		{name: "interrupt", err: graph.ErrGraphInterrupt, calls: 1},
+		{name: "checkpointer required", err: graph.ErrCheckpointerRequired, calls: 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			builder := graph.NewStateGraph(testReducer)
+			var calls atomic.Int32
+			if err := builder.AddNode("node", func(
+				context.Context,
+				testState,
+				graph.Runtime,
+			) (graph.Command[testDelta], error) {
+				calls.Add(1)
+				return graph.NoCommand[testDelta](), test.err
+			}, graph.WithRetryPolicies(graph.RetryPolicy{
+				MaxAttempts:     3,
+				InitialInterval: time.Nanosecond,
+				MaxInterval:     time.Nanosecond,
+			})); err != nil {
+				t.Fatal(err)
+			}
+			addEdge(t, builder, graph.START, "node")
+			addEdge(t, builder, "node", graph.END)
+			_, invokeErr := compileGraph(t, builder).Invoke(context.Background(), testState{}, graph.RunConfig{})
+			if !errors.Is(invokeErr, test.err) {
+				t.Fatalf("error=%v, want chain to contain %v", invokeErr, test.err)
+			}
+			if calls.Load() != test.calls {
+				t.Fatalf("calls=%d, want %d", calls.Load(), test.calls)
+			}
+		})
+	}
+
+	t.Run("panic", func(t *testing.T) {
+		builder := graph.NewStateGraph(testReducer)
+		var calls atomic.Int32
+		if err := builder.AddNode("node", func(
+			context.Context,
+			testState,
+			graph.Runtime,
+		) (graph.Command[testDelta], error) {
+			calls.Add(1)
+			panic("boom")
+		}, graph.WithRetryPolicies(graph.RetryPolicy{
+			MaxAttempts:     3,
+			InitialInterval: time.Nanosecond,
+			MaxInterval:     time.Nanosecond,
+		})); err != nil {
+			t.Fatal(err)
+		}
+		addEdge(t, builder, graph.START, "node")
+		addEdge(t, builder, "node", graph.END)
+		_, invokeErr := compileGraph(t, builder).Invoke(context.Background(), testState{}, graph.RunConfig{})
+		var panicErr *graph.NodePanicError
+		if !errors.As(invokeErr, &panicErr) || calls.Load() != 1 {
 			t.Fatalf("error=%v calls=%d", invokeErr, calls.Load())
 		}
 	})

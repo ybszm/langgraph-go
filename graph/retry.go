@@ -37,10 +37,9 @@ type nodeOptions struct {
 	deferred         bool
 }
 
-// WithDeferred marks a node as deferred for introspection and future
-// scheduling policies. The marker is stored on the compiled graph
-// (`CompiledGraph.IsDeferred`). Full LangGraph deferred barrier scheduling is
-// still Partial — see COMPATIBILITY.md and docs/DURABILITY.md.
+// WithDeferred delays edge-routed execution until no ordinary graph work
+// remains. Triggers are collapsed across super-steps and survive checkpoints.
+// Dynamic TaskSend values retain PUSH semantics and execute immediately.
 func WithDeferred() NodeOption {
 	return func(options *nodeOptions) error {
 		if options.deferred {

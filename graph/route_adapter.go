@@ -24,7 +24,9 @@ type RoutedTask[S any] struct {
 
 // RoutePlan is the storage-neutral output of compiled routing resolution.
 type RoutePlan[S any] struct {
-	Tasks   []RoutedTask[S]
+	Tasks []RoutedTask[S]
+	// Waiting is opaque scheduler state. External engines must persist it and
+	// pass it unchanged to the next ResolveTasks call.
 	Waiting map[string][]string
 }
 
